@@ -1,0 +1,313 @@
+"""Feature engineering for earthquake impact and aftershock prediction."""
+
+import numpy as np
+import pandas as pd
+from datetime import datetime, timedelta
+from typing import List, Optional, Dict
+
+
+class EarthquakeFeatureBuilder:
+    """
+    Build features for earthquake shaking estimation and aftershock forecasting.
+
+    For shaking (GMPE-style):
+    - Event parameters (magnitude, depth, distance)
+    - Site proxy (Vs30 or geology/elevation)
+
+    For aftershock (ETAS/Hawkes-style):
+    - Event sequence history
+    - Temporal clustering features
+    - Spatial clustering features
+    """
+
+    def __init__(
+        self,
+        site_data: Optional[pd.DataFrame] = None,
+        region_backgrounds: Optional[Dict] = None,
+    ):
+        """
+        Initialize earthquake feature builder.
+
+        Args:
+            site_data: Site characteristics (Vs30, geology) per H3 cell
+            region_backgrounds: Background seismicity rates per region
+        """
+        self.site_data = site_data
+        self.region_backgrounds = region_backgrounds or {}
+
+    def build_shaking_features(
+        self,
+        event_magnitude: float,
+        event_depth_km: float,
+        event_lat: float,
+        event_lon: float,
+        site_lat: float,
+        site_lon: float,
+        site_h3: Optional[str] = None,
+    ) -> np.ndarray:
+        """
+        Build features for ground shaking estimation.
+
+        Args:
+            event_magnitude: Earthquake magnitude
+            event_depth_km: Focal depth (km)
+            event_lat: Event latitude
+            event_lon: Event longitude
+            site_lat: Site latitude
+            site_lon: Site longitude
+            site_h3: Optional H3 cell for site lookup
+
+        Returns:
+            Feature vector for MMI prediction
+        """
+        features = []
+
+        # 1. Event parameters
+        features.append(event_magnitude)
+        features.append(event_depth_km)
+
+        # 2. Distance metrics
+        epicentral_dist = self._haversine_distance(
+            event_lat, event_lon, site_lat, site_lon
+        )
+        hypocentral_dist = np.sqrt(epicentral_dist**2 + event_depth_km**2)
+
+        features.append(epicentral_dist)
+        features.append(hypocentral_dist)
+        features.append(np.log10(hypocentral_dist + 1))  # Log distance
+
+        # 3. Site proxy
+        if self.site_data is not None and site_h3 is not None:
+            vs30, geology_class = self._get_site_characteristics(site_h3)
+        else:
+            # Fallback: estimate from elevation
+            # Higher elevation in Himalayas -> rock site
+            vs30 = self._estimate_vs30_from_location(site_lat, site_lon)
+            geology_class = 1 if vs30 > 500 else 0  # 1=rock, 0=soil
+
+        features.append(vs30)
+        features.append(geology_class)
+
+        # 4. Geometric spreading factor
+        geometric_factor = 1 / (hypocentral_dist + 10)  # Avoid division by zero
+        features.append(geometric_factor)
+
+        # 5. Fault-type proxy (if available, else default)
+        # In India: mostly thrust faults in Himalayas, strike-slip elsewhere
+        is_thrust = 1.0 if event_lat > 25.0 else 0.0  # Simplified
+        features.append(is_thrust)
+
+        return np.array(features, dtype=np.float32)
+
+    def build_aftershock_features(
+        self,
+        mainshock: pd.Series,
+        event_sequence: pd.DataFrame,
+        current_time: datetime,
+        region_id: str,
+    ) -> np.ndarray:
+        """
+        Build features for aftershock probability forecasting.
+
+        Args:
+            mainshock: Mainshock event (magnitude, time, location)
+            event_sequence: Sequence of all events in region
+            current_time: Current time for forecast
+            region_id: Seismic region identifier
+
+        Returns:
+            Feature vector for aftershock forecasting
+        """
+        features = []
+
+        # 1. Mainshock parameters
+        M_main = mainshock["magnitude"]
+        t_since_main = (current_time - mainshock["time"]).total_seconds() / 3600  # hours
+
+        features.append(M_main)
+        features.append(mainshock["depth_km"])
+        features.append(np.log10(t_since_main + 0.1))  # Log time since mainshock
+
+        # 2. Clustering features (events in past windows)
+        n_events_1h = self._count_events_in_window(event_sequence, current_time, hours=1)
+        n_events_6h = self._count_events_in_window(event_sequence, current_time, hours=6)
+        n_events_24h = self._count_events_in_window(event_sequence, current_time, hours=24)
+
+        features.extend([n_events_1h, n_events_6h, n_events_24h])
+
+        # 3. Magnitude distribution of recent aftershocks
+        recent_aftershocks = event_sequence[
+            event_sequence["time"] > (current_time - timedelta(hours=24))
+        ]
+
+        if len(recent_aftershocks) > 0:
+            max_aftershock = recent_aftershocks["magnitude"].max()
+            mean_aftershock = recent_aftershocks["magnitude"].mean()
+        else:
+            max_aftershock = 0.0
+            mean_aftershock = 0.0
+
+        features.extend([max_aftershock, mean_aftershock])
+
+        # 4. Omori-law decay proxy
+        # λ(t) ∝ 1 / (t + c)^p
+        # Use c=0.1 days, p=1.1 (typical values)
+        t_days = t_since_main / 24
+        omori_intensity = 1 / (t_days + 0.1) ** 1.1
+
+        features.append(omori_intensity)
+
+        # 5. Background seismicity rate
+        lambda_0 = self.region_backgrounds.get(region_id, {}).get("rate_per_day", 0.1)
+        features.append(lambda_0)
+
+        # 6. Spatial clustering (distance from mainshock)
+        if len(recent_aftershocks) > 0:
+            # Average distance of aftershocks from mainshock
+            distances = [
+                self._haversine_distance(
+                    mainshock["latitude"],
+                    mainshock["longitude"],
+                    row["latitude"],
+                    row["longitude"],
+                )
+                for _, row in recent_aftershocks.iterrows()
+            ]
+            mean_distance = np.mean(distances)
+        else:
+            mean_distance = 0.0
+
+        features.append(mean_distance)
+
+        return np.array(features, dtype=np.float32)
+
+    def build_event_sequence_for_hawkes(
+        self,
+        events: pd.DataFrame,
+        mainshock_time: datetime,
+        max_events: int = 200,
+    ) -> np.ndarray:
+        """
+        Build event sequence input for Neural Hawkes model.
+
+        Args:
+            events: Event catalog
+            mainshock_time: Mainshock time (t=0 reference)
+            max_events: Maximum number of events to include
+
+        Returns:
+            Event sequence array [N, 5] with [Δt, M, depth, lat, lon]
+        """
+        # Sort by time
+        events = events.sort_values("time")
+
+        # Compute time since mainshock
+        events = events.copy()
+        events["delta_t"] = (events["time"] - mainshock_time).dt.total_seconds() / 3600
+
+        # Filter to aftershocks (Δt > 0) and limit
+        aftershocks = events[events["delta_t"] > 0].head(max_events)
+
+        if len(aftershocks) == 0:
+            # Return dummy event
+            return np.zeros((1, 5), dtype=np.float32)
+
+        # Build sequence matrix
+        sequence = np.column_stack([
+            aftershocks["delta_t"].values,
+            aftershocks["magnitude"].values,
+            aftershocks["depth_km"].values,
+            aftershocks["latitude"].values,
+            aftershocks["longitude"].values,
+        ])
+
+        return sequence.astype(np.float32)
+
+    def _haversine_distance(
+        self,
+        lat1: float,
+        lon1: float,
+        lat2: float,
+        lon2: float,
+    ) -> float:
+        """Calculate Haversine distance in km."""
+        R = 6371.0
+        lat1_rad = np.radians(lat1)
+        lat2_rad = np.radians(lat2)
+        delta_lat = np.radians(lat2 - lat1)
+        delta_lon = np.radians(lon2 - lon1)
+
+        a = (
+            np.sin(delta_lat / 2) ** 2
+            + np.cos(lat1_rad) * np.cos(lat2_rad) * np.sin(delta_lon / 2) ** 2
+        )
+        c = 2 * np.arctan2(np.sqrt(a), np.sqrt(1 - a))
+
+        return R * c
+
+    def _get_site_characteristics(self, h3_cell: str) -> tuple[float, int]:
+        """Get Vs30 and geology class for site."""
+        if self.site_data is None:
+            return 300.0, 0
+
+        site = self.site_data[self.site_data["h3_id"] == h3_cell]
+
+        if len(site) == 0:
+            return 300.0, 0
+
+        vs30 = site.iloc[0].get("vs30", 300.0)
+        geology = site.iloc[0].get("geology_class", 0)
+
+        return vs30, geology
+
+    def _estimate_vs30_from_location(self, lat: float, lon: float) -> float:
+        """Estimate Vs30 from location (rough proxy)."""
+        # Himalayas: rock sites (high Vs30)
+        if lat > 28.0:
+            return 600.0
+        # Indo-Gangetic plains: soft soil
+        elif 24.0 < lat < 28.0:
+            return 200.0
+        # Peninsular India: mostly rock
+        else:
+            return 400.0
+
+    def _count_events_in_window(
+        self,
+        events: pd.DataFrame,
+        current_time: datetime,
+        hours: int,
+    ) -> int:
+        """Count events in time window before current_time."""
+        cutoff = current_time - timedelta(hours=hours)
+        return len(events[(events["time"] >= cutoff) & (events["time"] < current_time)])
+
+    def get_shaking_feature_names(self) -> List[str]:
+        """Get feature names for shaking model."""
+        return [
+            "magnitude",
+            "depth_km",
+            "epicentral_dist_km",
+            "hypocentral_dist_km",
+            "log_hypo_dist",
+            "vs30",
+            "geology_class",
+            "geometric_factor",
+            "is_thrust",
+        ]
+
+    def get_aftershock_feature_names(self) -> List[str]:
+        """Get feature names for aftershock model."""
+        return [
+            "M_mainshock",
+            "depth_mainshock",
+            "log_time_since_main",
+            "n_events_1h",
+            "n_events_6h",
+            "n_events_24h",
+            "max_aftershock_M",
+            "mean_aftershock_M",
+            "omori_intensity",
+            "background_rate",
+            "mean_distance_km",
+        ]
