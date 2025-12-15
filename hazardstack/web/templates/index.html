@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HazardStack - India Multi-Hazard Nowcasting System</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <div class="logo-icon">🌍</div>
+                    <div>
+                        <h1>HazardStack</h1>
+                        <p>Multi-Hazard Nowcasting for India</p>
+                    </div>
+                </div>
+                <nav class="nav">
+                    <a href="#dashboard">Dashboard</a>
+                    <a href="#features">Features</a>
+                    <a href="http://localhost:8000/docs" target="_blank">API Docs</a>
+                    <a href="https://github.com/JohnathanAhdout/HazardStack" target="_blank">GitHub</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero -->
+    <section class="hero">
+        <div class="container">
+            <h1>🌊 India Multi-Hazard Nowcasting</h1>
+            <p>Real-time probabilistic forecasting for monsoon floods, earthquakes, and extreme rainfall</p>
+            <div class="hero-badges">
+                <div class="badge">🌧️ Rain Nowcast (0-72h)</div>
+                <div class="badge">🌊 Flood Exceedance</div>
+                <div class="badge">⚡ Earthquake Impact</div>
+                <div class="badge">📊 Aftershock Forecast</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Dashboard -->
+    <section id="dashboard" class="dashboard">
+        <div class="dashboard-header">
+            <h2>Live Risk Dashboard</h2>
+            <p>Query multi-hazard risk for any location in India</p>
+        </div>
+
+        <div class="dashboard-content">
+            <!-- System Stats -->
+            <div class="stats-grid">
+                <div class="stat-card success">
+                    <div class="stat-icon">✅</div>
+                    <div class="stat-label">System Status</div>
+                    <div class="stat-value" id="systemStatus">LOADING...</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">⚡</div>
+                    <div class="stat-label">CPU Usage</div>
+                    <div class="stat-value" id="cpuUsage">--</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">💾</div>
+                    <div class="stat-label">Memory Usage</div>
+                    <div class="stat-value" id="memoryUsage">--</div>
+                </div>
+                <div class="stat-card warning">
+                    <div class="stat-icon">📡</div>
+                    <div class="stat-label">Recent Events (24h)</div>
+                    <div class="stat-value" id="recentEvents">--</div>
+                </div>
+            </div>
+
+            <!-- Risk Query -->
+            <div class="query-section">
+                <h3>🔍 Query Multi-Hazard Risk</h3>
+                <div class="query-form">
+                    <div class="form-group">
+                        <label for="latitude">Latitude</label>
+                        <input type="number" id="latitude" step="0.01" placeholder="e.g., 19.07">
+                    </div>
+                    <div class="form-group">
+                        <label for="longitude">Longitude</label>
+                        <input type="number" id="longitude" step="0.01" placeholder="e.g., 72.88">
+                    </div>
+                    <div class="form-group">
+                        <label for="radius">Radius (km)</label>
+                        <input type="number" id="radius" value="10" min="1" max="50">
+                    </div>
+                    <div class="form-group">
+                        <label for="horizons">Horizons</label>
+                        <select id="horizons">
+                            <option value="1h,6h,24h">1h, 6h, 24h</option>
+                            <option value="1h,6h,12h,24h,72h">All Horizons</option>
+                            <option value="6h">6h Only</option>
+                            <option value="24h">24h Only</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                    <button class="btn btn-primary" id="queryBtn">🔍 Query Risk</button>
+                    <button class="btn btn-secondary" id="exampleBtn">📍 Load Mumbai Example</button>
+                </div>
+            </div>
+
+            <!-- Loading Spinner -->
+            <div class="spinner" id="spinner"></div>
+
+            <!-- Results -->
+            <div class="results" id="results">
+                <h3 style="margin-bottom: 1.5rem;">📊 Risk Analysis Results</h3>
+                <div class="risk-cards" id="riskCards"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section id="features" class="features">
+        <div class="container">
+            <h2>🚀 Key Features</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🧠</div>
+                    <h3>Novel Readability Layer</h3>
+                    <p>Causal State Space Models with mask-aware denoising for stable streaming predictions</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🌧️</div>
+                    <h3>Rain Nowcast (0-72h)</h3>
+                    <p>Spatiotemporal transformer with calibrated probability distributions for extreme rainfall</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🌊</div>
+                    <h3>Flood Prediction</h3>
+                    <p>Graph Neural Network on river basin topology for threshold exceedance forecasting</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⚡</div>
+                    <h3>Earthquake Impact</h3>
+                    <p>GMPE-style shaking intensity estimation with real-time MMI distribution</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3>Aftershock Forecasting</h3>
+                    <p>Neural Hawkes Process for probabilistic aftershock prediction (1h-7d horizons)</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🇮🇳</div>
+                    <h3>India-Tailored</h3>
+                    <p>Integrates IMD, CWC, NCS, MOSDAC data sources for comprehensive coverage</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📈</div>
+                    <h3>Calibrated Probabilities</h3>
+                    <p>Rigorous evaluation with Brier, CRPS, ECE metrics and reliability curves</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔬</div>
+                    <h3>Physics-Guided</h3>
+                    <p>Features encode domain knowledge: API, ETAS clustering, basin topology</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🚀</div>
+                    <h3>Real-Time Ready</h3>
+                    <p>Streaming architecture for operational deployment with Docker + FastAPI</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p><strong>HazardStack v0.1.0</strong> - Multi-Hazard Nowcasting System for India</p>
+            <p style="margin-top: 0.5rem;">
+                Built with PyTorch • FastAPI • PostgreSQL • Redis • Docker
+            </p>
+            <p style="margin-top: 0.5rem; font-size: 0.9rem;">
+                <a href="http://localhost:8000/docs" target="_blank" style="color: var(--primary);">API Documentation</a> |
+                <a href="https://github.com/JohnathanAhdout/HazardStack" target="_blank" style="color: var(--primary);">GitHub Repository</a>
+            </p>
+            <p style="margin-top: 1rem; color: #9ca3af; font-size: 0.85rem;">
+                ⚠️ Research Prototype - For official warnings, consult IMD, CWC, NCS, INCOIS
+            </p>
+        </div>
+    </footer>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
