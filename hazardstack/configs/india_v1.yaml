@@ -1,0 +1,215 @@
+grid:
+  h3_resolution: 4  # ~5-10 km cell size
+  india_geojson: "data/raw/india.geojson"
+  india_bounds:
+    lat_min: 6.5
+    lat_max: 35.5
+    lon_min: 68.0
+    lon_max: 97.5
+
+time:
+  rain_step_minutes: 15
+  flood_step_minutes: 60
+  eq_check_minutes: 1
+  horizons: ["1h", "6h", "12h", "24h", "72h"]
+
+data_sources:
+  imd:
+    gridded_rainfall_url: "https://imdpune.gov.in/cmpg/Griddata/Rainfall_25_Bin.html"
+    resolution: 0.25  # degrees
+
+  mosdac:
+    gsmap_url: "https://www.mosdac.gov.in/gsmap-isro-rain"
+    update_interval_minutes: 60
+    resolution: 0.1  # degrees
+
+  cwc:
+    flood_forecast_url: "https://ffs.india-water.gov.in"
+    discharge_telemetry_url: "https://nwdp.nwic.gov.in/dataset/river-discharge-telemetry-hourly-central-water-commission-cwc"
+    update_interval_minutes: 60
+
+  ncs:
+    earthquake_catalog_url: "https://seismo.gov.in/data-portal"
+    realtime_url: "https://seismo.gov.in"
+    update_interval_minutes: 1
+
+  usgs:
+    event_api: "https://earthquake.usgs.gov/fdsnws/event/1/query"
+    update_interval_minutes: 5
+
+  incois:
+    tsunami_url: "https://tsunami.incois.gov.in"
+    update_interval_minutes: 5
+
+models:
+  d_model: 192
+  dropout: 0.1
+
+  readability:
+    causal_conv_layers: 6
+    causal_conv_channels: 128
+    dilation_rates: [1, 2, 4, 8, 16, 32]
+    kernel_size: 3
+    use_glu: true
+
+  rain:
+    window_steps: 12  # 3 hours at 15-min resolution
+    backbone_layers: 4
+    attention_heads: 6
+    local_attention_radius: 3  # H3 ring distance
+    distribution: "gamma"  # or "lognormal"
+    quantiles: [0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99]
+
+  flood:
+    window_steps: 72  # 72 hours
+    gnn_layers: 3
+    gnn_type: "gat"  # or "sage"
+    gnn_hidden: 256
+    aggregation: "mean"
+
+  eq:
+    aftershock_window_days: 30
+    aftershock_max_events: 200
+    mmi_mlp_hidden: [128, 128, 64]
+    hawkes_hidden: 128
+    hawkes_layers: 3
+    magnitude_threshold: 3.5
+
+training:
+  splits:
+    train_start: "2001-01-01"
+    train_end: "2018-12-31"
+    val_start: "2019-01-01"
+    val_end: "2021-12-31"
+    test_start: "2022-01-01"
+    test_end: "2024-12-31"
+
+  spatial_holdout:
+    enabled: true
+    holdout_regions: ["northeast"]  # For testing generalization
+
+  batch_size: 32
+  learning_rate: 0.0001
+  weight_decay: 0.01
+  max_epochs: 100
+  patience: 10
+  gradient_clip: 1.0
+
+  loss_weights:
+    rain_accumulation: 1.0
+    rain_exceedance: 1.0
+    flood_exceedance: 1.5
+    eq_mmi: 1.0
+    aftershock: 1.2
+
+  regularization:
+    temporal_smoothness: 0.01
+    monotonicity: 0.1  # For flood/rain relationship
+
+evaluation:
+  metrics:
+    - "brier_score"
+    - "log_loss"
+    - "crps"
+    - "ece"  # Expected Calibration Error
+    - "lead_time_at_far"
+
+  false_alarm_rates: [0.1, 0.2, 0.3]
+
+  backtesting_regions:
+    - "western_ghats"
+    - "indo_gangetic_plains"
+    - "brahmaputra_ne"
+    - "coastal_cyclone"
+    - "himalayan_belt"
+    - "andaman_nicobar"
+
+risk:
+  weights:
+    rain_extreme_1h: 0.6
+    rain_extreme_6h: 0.9
+    rain_extreme_24h: 0.8
+    flood_12h: 1.0
+    flood_24h: 0.9
+    eq_shaking: 1.0
+    aftershock_24h: 0.6
+
+  thresholds:
+    low: 0.2
+    moderate: 0.5
+    high: 0.75
+    extreme: 0.9
+
+  hazard_overrides:
+    # Force risk level based on specific hazards
+    mmi_high: 5.0  # MMI >= 5 forces HIGH
+    mmi_extreme: 7.0  # MMI >= 7 forces EXTREME
+    flood_prob_extreme: 0.85
+
+serving:
+  api:
+    host: "0.0.0.0"
+    port: 8000
+    workers: 4
+    cors_origins: ["*"]
+
+  cache:
+    redis_url: "redis://localhost:6379"
+    tile_cache_ttl: 600  # seconds
+    risk_cache_ttl: 300
+
+  database:
+    url: "postgresql://hazard:hazard@localhost:5432/hazardstack"
+    pool_size: 10
+
+  inference:
+    batch_size: 256
+    device: "cuda"  # or "cpu"
+    use_onnx: true
+    num_workers: 2
+
+alerts:
+  push_notifications:
+    fcm_key_path: "secrets/fcm_key.json"
+    apns_key_path: "secrets/apns_key.p8"
+
+  geofence:
+    default_radius_km: 10
+    max_radius_km: 50
+
+  thresholds:
+    # Only send alerts above these combined risk scores
+    moderate: 0.5
+    high: 0.75
+    extreme: 0.9
+
+  rate_limits:
+    max_alerts_per_user_per_hour: 5
+    max_alerts_per_user_per_day: 20
+
+  message_templates:
+    high_rain: "High rainfall risk ({score:.0%}) expected within {radius}km in next {horizon}. Monitor official IMD updates."
+    high_flood: "Flood risk ({score:.0%}) in {basin} basin within {horizon}. Follow CWC flood warnings."
+    earthquake: "Earthquake M{magnitude} detected. Expected shaking intensity MMI {mmi:.1f} in your area. {aftershock_message}"
+
+features:
+  rain:
+    window_hours: 24
+    accumulation_windows: [1, 3, 6, 12, 24]  # hours
+    api_decay: 0.85
+    api_days: [3, 7, 14]
+
+  flood:
+    window_hours: 168  # 7 days
+    basin_aggregation: "area_weighted"
+    api_days: [7, 14, 30]
+
+  eq:
+    clustering_tau: 24  # hours for exponential decay
+    region_buffer_km: 50
+
+explainability:
+  enabled: true
+  top_k_features: 5
+  method: "integrated_gradients"  # or "attention_rollout"
+  baseline: "zeros"

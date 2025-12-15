@@ -1,0 +1,77 @@
+version: '3.8'
+
+services:
+  # PostgreSQL with PostGIS
+  postgres:
+    image: postgis/postgis:15-3.3
+    container_name: hazardstack-postgres
+    environment:
+      POSTGRES_DB: hazardstack
+      POSTGRES_USER: hazard
+      POSTGRES_PASSWORD: hazard
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hazard"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for caching
+  redis:
+    image: redis:7-alpine
+    container_name: hazardstack-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # API service
+  api:
+    build:
+      context: .
+      dockerfile: infra/docker/api.Dockerfile
+    container_name: hazardstack-api
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://hazard:hazard@postgres:5432/hazardstack
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./configs:/app/configs
+      - ./models:/app/models
+    restart: unless-stopped
+
+  # Data ingestion worker (optional, for production)
+  # worker:
+  #   build:
+  #     context: .
+  #     dockerfile: infra/docker/worker.Dockerfile
+  #   container_name: hazardstack-worker
+  #   environment:
+  #     - DATABASE_URL=postgresql://hazard:hazard@postgres:5432/hazardstack
+  #     - REDIS_URL=redis://redis:6379
+  #   depends_on:
+  #     - postgres
+  #     - redis
+  #   volumes:
+  #     - ./data:/app/data
+  #     - ./configs:/app/configs
+  #   restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
