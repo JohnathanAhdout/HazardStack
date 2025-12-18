@@ -7,25 +7,83 @@ from typing import Optional
 import math
 
 
+class SpectralAttention(nn.Module):
+    """
+    Spectral attention mechanism for frequency-dependent feature weighting.
+
+    Learns to weight different frequency bands based on earthquake characteristics.
+    """
+
+    def __init__(self, spectral_dim: int = 10, hidden_dim: int = 32):
+        """
+        Initialize spectral attention.
+
+        Args:
+            spectral_dim: Number of spectral features
+            hidden_dim: Hidden dimension for attention network
+        """
+        super().__init__()
+
+        self.attention_net = nn.Sequential(
+            nn.Linear(spectral_dim, hidden_dim),
+            nn.Tanh(),
+            nn.Linear(hidden_dim, spectral_dim),
+            nn.Softmax(dim=-1),
+        )
+
+    def forward(self, spectral_features: torch.Tensor) -> torch.Tensor:
+        """
+        Compute attention-weighted spectral features.
+
+        Args:
+            spectral_features: [B, spectral_dim]
+
+        Returns:
+            Weighted spectral features [B, spectral_dim]
+        """
+        attention_weights = self.attention_net(spectral_features)
+        return spectral_features * attention_weights
+
+
 class GroundMotionModel(nn.Module):
     """
     Ground Motion Prediction Equation (GMPE) style model for shaking intensity.
 
+    Enhanced with frequency-dependent site response and spectral attention.
     Predicts MMI (Modified Mercalli Intensity) distribution at a location.
     """
 
-    def __init__(self, hidden_dims: list[int] = [128, 128, 64], dropout: float = 0.1):
+    def __init__(
+        self,
+        hidden_dims: list[int] = [128, 128, 64],
+        dropout: float = 0.1,
+        use_spectral_features: bool = True,
+    ):
         """
         Initialize GMPE model.
 
         Args:
             hidden_dims: Hidden layer dimensions
             dropout: Dropout rate
+            use_spectral_features: Use enhanced spectral site response features
         """
         super().__init__()
 
-        # Input features: [magnitude, depth, distance, site_proxy, ...]
-        input_dim = 10  # Will be specified by feature engineering
+        self.use_spectral_features = use_spectral_features
+
+        # Input features dimensions
+        base_dim = 9  # Original features
+        spectral_dim = 10  # Spectral response features (if enabled)
+        input_dim = base_dim + (spectral_dim if use_spectral_features else 0)
+
+        self.base_dim = base_dim
+        self.spectral_dim = spectral_dim
+
+        # Spectral attention (if using spectral features)
+        if use_spectral_features:
+            self.spectral_attention = SpectralAttention(spectral_dim)
+        else:
+            self.spectral_attention = None
 
         layers = []
         prev_dim = input_dim
@@ -46,15 +104,31 @@ class GroundMotionModel(nn.Module):
 
     def forward(self, event_features: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """
-        Forward pass.
+        Forward pass with spectral attention.
 
         Args:
             event_features: Event and site features [B, N_cells, F]
+                           If use_spectral_features=True, F=19 (9 base + 10 spectral)
+                           Otherwise, F=9
 
         Returns:
             Tuple of (mmi_mean [B, N_cells], mmi_std [B, N_cells])
         """
-        h = self.encoder(event_features)
+        # Apply spectral attention if enabled
+        if self.use_spectral_features and self.spectral_attention is not None:
+            # Split features into base and spectral
+            base_features = event_features[..., :self.base_dim]
+            spectral_features = event_features[..., self.base_dim:]
+
+            # Apply attention to spectral features
+            spectral_attended = self.spectral_attention(spectral_features)
+
+            # Recombine
+            features = torch.cat([base_features, spectral_attended], dim=-1)
+        else:
+            features = event_features
+
+        h = self.encoder(features)
 
         mmi_mean = self.mean_head(h).squeeze(-1)  # [B, N_cells]
         mmi_std = F.softplus(self.std_head(h)).squeeze(-1) + 1e-3  # [B, N_cells]
@@ -220,6 +294,8 @@ class ETASModel(nn.Module):
 class EarthquakeModel(nn.Module):
     """
     Combined earthquake impact and aftershock model.
+
+    Enhanced with spectral site response for improved ground motion prediction.
     """
 
     def __init__(
@@ -229,6 +305,7 @@ class EarthquakeModel(nn.Module):
         hawkes_hidden: int = 128,
         hawkes_layers: int = 3,
         dropout: float = 0.1,
+        use_spectral_features: bool = True,
     ):
         """
         Initialize earthquake model.
@@ -239,11 +316,16 @@ class EarthquakeModel(nn.Module):
             hawkes_hidden: Hidden dim for Hawkes process
             hawkes_layers: Number of Hawkes RNN layers
             dropout: Dropout rate
+            use_spectral_features: Enable spectral site response features
         """
         super().__init__()
 
-        # Ground motion model
-        self.gmpe = GroundMotionModel(mmi_hidden_dims, dropout)
+        # Ground motion model with spectral enhancement
+        self.gmpe = GroundMotionModel(
+            mmi_hidden_dims,
+            dropout,
+            use_spectral_features=use_spectral_features,
+        )
 
         # Aftershock model
         self.hawkes = NeuralHawkesProcess(

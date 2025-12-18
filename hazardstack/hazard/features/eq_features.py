@@ -5,6 +5,13 @@ import pandas as pd
 from datetime import datetime, timedelta
 from typing import List, Optional, Dict
 
+from ..common.spectral_response import (
+    SpectralSiteResponse,
+    GeologicalProxyEstimator,
+    SiteResponseParams,
+    compute_directivity_factor,
+)
+
 
 class EarthquakeFeatureBuilder:
     """
@@ -24,6 +31,7 @@ class EarthquakeFeatureBuilder:
         self,
         site_data: Optional[pd.DataFrame] = None,
         region_backgrounds: Optional[Dict] = None,
+        use_spectral_response: bool = True,
     ):
         """
         Initialize earthquake feature builder.
@@ -31,9 +39,19 @@ class EarthquakeFeatureBuilder:
         Args:
             site_data: Site characteristics (Vs30, geology) per H3 cell
             region_backgrounds: Background seismicity rates per region
+            use_spectral_response: Enable spectral site response features
         """
         self.site_data = site_data
         self.region_backgrounds = region_backgrounds or {}
+        self.use_spectral_response = use_spectral_response
+
+        # Initialize spectral response calculators
+        if use_spectral_response:
+            self.spectral_calc = SpectralSiteResponse()
+            self.geo_proxy = GeologicalProxyEstimator()
+        else:
+            self.spectral_calc = None
+            self.geo_proxy = None
 
     def build_shaking_features(
         self,
@@ -44,9 +62,11 @@ class EarthquakeFeatureBuilder:
         site_lat: float,
         site_lon: float,
         site_h3: Optional[str] = None,
+        site_elevation: Optional[float] = None,
+        fault_strike: Optional[float] = None,
     ) -> np.ndarray:
         """
-        Build features for ground shaking estimation.
+        Build features for ground shaking estimation with spectral site response.
 
         Args:
             event_magnitude: Earthquake magnitude
@@ -56,9 +76,11 @@ class EarthquakeFeatureBuilder:
             site_lat: Site latitude
             site_lon: Site longitude
             site_h3: Optional H3 cell for site lookup
+            site_elevation: Site elevation (m) for geological proxy
+            fault_strike: Fault strike angle (degrees) for directivity
 
         Returns:
-            Feature vector for MMI prediction
+            Feature vector for MMI prediction (enhanced with spectral features)
         """
         features = []
 
@@ -96,6 +118,36 @@ class EarthquakeFeatureBuilder:
         # In India: mostly thrust faults in Himalayas, strike-slip elsewhere
         is_thrust = 1.0 if event_lat > 25.0 else 0.0  # Simplified
         features.append(is_thrust)
+
+        # 6. SPECTRAL SITE RESPONSE FEATURES (NEW)
+        if self.use_spectral_response and self.spectral_calc is not None:
+            # Get or estimate site response parameters
+            site_params = self._get_site_response_params(
+                site_lat, site_lon, site_h3, site_elevation, vs30, geology_class
+            )
+
+            # Compute spectral features
+            spectral_features = self.spectral_calc.compute_spectral_features(site_params)
+            features.extend(spectral_features.tolist())
+
+            # Add directivity effects if fault strike available
+            if fault_strike is not None:
+                # Estimate rupture length from magnitude (Wells & Coppersmith, 1994)
+                rupture_length = 10 ** (event_magnitude * 0.5 - 1.88)  # km
+                directivity = compute_directivity_factor(
+                    event_lat, event_lon, fault_strike,
+                    site_lat, site_lon, rupture_length
+                )
+            else:
+                directivity = 1.0  # No directivity effect
+
+            features.append(directivity)
+
+            # Estimate dominant ground motion frequency based on magnitude and distance
+            # Larger events have lower frequency content
+            # More distant sites receive lower frequencies (attenuation)
+            gm_freq = 5.0 / (1 + 0.5 * event_magnitude) / (1 + hypocentral_dist / 50)
+            features.append(gm_freq)
 
         return np.array(features, dtype=np.float32)
 
@@ -272,6 +324,57 @@ class EarthquakeFeatureBuilder:
         else:
             return 400.0
 
+    def _get_site_response_params(
+        self,
+        site_lat: float,
+        site_lon: float,
+        site_h3: Optional[str],
+        site_elevation: Optional[float],
+        vs30: float,
+        geology_class: int,
+    ) -> SiteResponseParams:
+        """
+        Get or estimate site response parameters.
+
+        Args:
+            site_lat: Site latitude
+            site_lon: Site longitude
+            site_h3: H3 cell ID
+            site_elevation: Site elevation (m)
+            vs30: Shear wave velocity
+            geology_class: Geology classification
+
+        Returns:
+            Site response parameters
+        """
+        # Try to get more detailed data from site database
+        sediment_depth = 100.0  # Default
+        basin_depth = None
+        kappa = 0.03  # Default
+
+        if self.site_data is not None and site_h3 is not None:
+            site = self.site_data[self.site_data["h3_id"] == site_h3]
+            if len(site) > 0:
+                sediment_depth = site.iloc[0].get("sediment_depth", 100.0)
+                basin_depth = site.iloc[0].get("basin_depth", None)
+                kappa = site.iloc[0].get("kappa", 0.03)
+
+        # If no detailed data, use geological proxy estimator
+        if sediment_depth == 100.0 and self.geo_proxy is not None:
+            proxy_params = self.geo_proxy.estimate_from_location(
+                site_lat, site_lon, site_elevation
+            )
+            return proxy_params
+
+        # Otherwise, construct from available data
+        return SiteResponseParams(
+            vs30=vs30,
+            sediment_depth=sediment_depth,
+            basin_depth=basin_depth,
+            kappa=kappa,
+            geology_class=geology_class,
+        )
+
     def _count_events_in_window(
         self,
         events: pd.DataFrame,
@@ -284,7 +387,7 @@ class EarthquakeFeatureBuilder:
 
     def get_shaking_feature_names(self) -> List[str]:
         """Get feature names for shaking model."""
-        return [
+        base_features = [
             "magnitude",
             "depth_km",
             "epicentral_dist_km",
@@ -295,6 +398,24 @@ class EarthquakeFeatureBuilder:
             "geometric_factor",
             "is_thrust",
         ]
+
+        if self.use_spectral_response:
+            # Add spectral response features
+            spectral_features = [
+                "site_dominant_freq",  # f0
+                "amp_0.5hz",  # Amplification at 0.5 Hz
+                "amp_1.0hz",  # Amplification at 1.0 Hz
+                "amp_2.0hz",  # Amplification at 2.0 Hz
+                "amp_5.0hz",  # Amplification at 5.0 Hz
+                "amp_10.0hz",  # Amplification at 10.0 Hz
+                "basin_flag",  # Basin indicator
+                "kappa",  # High-frequency attenuation
+                "directivity_factor",  # Rupture directivity
+                "gm_dominant_freq",  # Ground motion dominant frequency
+            ]
+            return base_features + spectral_features
+        else:
+            return base_features
 
     def get_aftershock_feature_names(self) -> List[str]:
         """Get feature names for aftershock model."""
