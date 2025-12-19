@@ -13,10 +13,17 @@ This script:
 import sys
 import logging
 from pathlib import Path
-import torch
+from typing import Dict, Any, Optional
 import json
-import numpy as np
 from datetime import datetime
+
+try:
+    import torch
+    import numpy as np
+    HAS_DEPS = True
+except ImportError:
+    HAS_DEPS = False
+    print("Warning: PyTorch/NumPy not installed. Some features may be limited.")
 
 # Add hazardstack to path
 sys.path.insert(0, str(Path(__file__).parent / "hazardstack"))
