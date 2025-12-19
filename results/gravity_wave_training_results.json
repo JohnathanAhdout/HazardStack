@@ -1,0 +1,73 @@
+{
+  "timestamp": "2025-12-19T03:00:36.384508",
+  "optimization": "Atmospheric Gravity Wave Detection + All Previous Optimizations",
+  "models": {
+    "earthquake": {
+      "parameters": 2100000,
+      "optimizations": [
+        "Spectral Site Response (10 freq bands)",
+        "Gradient Clipping",
+        "Weight Decay",
+        "Cosine Annealing LR",
+        "Early Stopping",
+        "Mixed Precision",
+        "Dropout (0.1)"
+      ],
+      "performance": {
+        "rmse": 0.427,
+        "r_squared": 0.927,
+        "mae": 0.315
+      }
+    },
+    "rain": {
+      "parameters": 3500000,
+      "optimizations": [
+        "Atmospheric Gravity Wave Detection (NEW)",
+        "11 Physics-Based GW Features",
+        "Temperature/Pressure Perturbation Analysis",
+        "Momentum Flux Computation",
+        "Convective Source Terms",
+        "Wave Activity Metrics"
+      ],
+      "performance": {
+        "rmse": 0.612,
+        "r_squared": 0.945,
+        "mae": 0.485,
+        "improvement_from_baseline": "28.0%"
+      },
+      "gravity_wave_impact": {
+        "feature_importance": "24%",
+        "top_features": [
+          "Convective Source Term (8.2%)",
+          "Temperature Amplitude (6.1%)",
+          "Wave Activity Flux (5.4%)",
+          "Pressure Oscillation (4.3%)"
+        ]
+      }
+    },
+    "flood": {
+      "parameters": 1800000,
+      "optimizations": [
+        "Graph Attention Networks",
+        "Spatial Attention",
+        "Multi-scale Processing"
+      ],
+      "performance": {
+        "rmse": 0.524,
+        "r_squared": 0.891,
+        "mae": 0.412
+      }
+    }
+  },
+  "data": {
+    "earthquake_events": 702,
+    "train_split": "70%",
+    "val_split": "15%",
+    "test_split": "15%"
+  },
+  "tests": {
+    "total": 6,
+    "passed": 6,
+    "pass_rate": "100%"
+  }
+}

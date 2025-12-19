@@ -7,6 +7,7 @@ from typing import Dict, List, Optional
 import xarray as xr
 
 from hazard.common.time import get_season_embedding, get_monsoon_phase
+from hazard.features.gravity_wave_detector import GravityWaveDetector
 
 
 class RainFeatureBuilder:
@@ -19,12 +20,14 @@ class RainFeatureBuilder:
     - Seasonal embeddings
     - Storm motion proxies
     - Accumulation windows
+    - Atmospheric Gravity Wave signatures (NEW OPTIMIZATION)
     """
 
     def __init__(
         self,
         climatology_data: Optional[pd.DataFrame] = None,
         api_decay: float = 0.85,
+        enable_gravity_waves: bool = True,
     ):
         """
         Initialize feature builder.
@@ -32,9 +35,17 @@ class RainFeatureBuilder:
         Args:
             climatology_data: Historical climatology (mean, percentiles per month/cell)
             api_decay: Decay factor for API (default 0.85)
+            enable_gravity_waves: Enable atmospheric gravity wave detection (default True)
         """
         self.climatology = climatology_data
         self.api_decay = api_decay
+        self.enable_gravity_waves = enable_gravity_waves
+
+        # Initialize gravity wave detector
+        if self.enable_gravity_waves:
+            self.gw_detector = GravityWaveDetector()
+        else:
+            self.gw_detector = None
 
     def build_features(
         self,
@@ -42,6 +53,7 @@ class RainFeatureBuilder:
         historical_rainfall: pd.DataFrame,  # Past rainfall time series
         timestamp: datetime,
         h3_cell: str,
+        meteorological_data: Optional[Dict[str, any]] = None,  # Weather data for GW detection
     ) -> np.ndarray:
         """
         Build feature vector for a single cell at a timestamp.
@@ -51,9 +63,19 @@ class RainFeatureBuilder:
             historical_rainfall: Historical data for lookback window
             timestamp: Current timestamp
             h3_cell: H3 cell ID
+            meteorological_data: Optional dict containing temperature, pressure, wind data
+                for gravity wave detection. Keys:
+                - 'temperature': current temp (K)
+                - 'pressure': current pressure (hPa)
+                - 'temperature_history': np.ndarray of past temps
+                - 'pressure_history': np.ndarray of past pressures
+                - 'timestamp_history': np.ndarray of timestamps
+                - 'cape': Convective Available Potential Energy (J/kg)
+                - 'cloud_top': Cloud top height (m)
+                - 'u_wind', 'v_wind', 'w_wind': Wind components (m/s)
 
         Returns:
-            Feature vector [D]
+            Feature vector [D] - now includes 11 additional gravity wave features
         """
         features = []
 
@@ -106,6 +128,13 @@ class RainFeatureBuilder:
             storm_tendency = 0.0
 
         features.append(storm_tendency)
+
+        # 9. ATMOSPHERIC GRAVITY WAVE FEATURES (NEW OPTIMIZATION)
+        if self.enable_gravity_waves and self.gw_detector is not None:
+            gw_features = self._extract_gravity_wave_features(
+                R_now, timestamp, meteorological_data
+            )
+            features.extend(gw_features)
 
         return np.array(features, dtype=np.float32)
 
@@ -193,6 +222,128 @@ class RainFeatureBuilder:
         encoding = [1.0 if p == phase else 0.0 for p in phases]
         return encoding
 
+    def _extract_gravity_wave_features(
+        self,
+        precipitation_rate: float,
+        timestamp: datetime,
+        meteorological_data: Optional[Dict] = None,
+    ) -> List[float]:
+        """
+        Extract atmospheric gravity wave features.
+
+        Args:
+            precipitation_rate: Current rainfall rate (mm/h)
+            timestamp: Current timestamp
+            meteorological_data: Dict with temperature, pressure, wind data
+
+        Returns:
+            List of 11 gravity wave features
+        """
+        if meteorological_data is None:
+            # Generate synthetic meteorological data based on rainfall
+            # In production, this would come from weather data sources
+            meteorological_data = self._generate_synthetic_weather_data(
+                precipitation_rate, timestamp
+            )
+
+        # Extract all gravity wave features
+        gw_feat_dict = self.gw_detector.extract_features(
+            temperature=meteorological_data.get('temperature', 288.15),
+            pressure=meteorological_data.get('pressure', 1013.25),
+            temperature_history=meteorological_data.get('temperature_history'),
+            pressure_history=meteorological_data.get('pressure_history'),
+            timestamp_history=meteorological_data.get('timestamp_history'),
+            precipitation_rate=precipitation_rate,
+            u_wind=meteorological_data.get('u_wind'),
+            v_wind=meteorological_data.get('v_wind'),
+            w_wind=meteorological_data.get('w_wind'),
+            cape=meteorological_data.get('cape', 0.0),
+            cloud_top=meteorological_data.get('cloud_top', 5000.0),
+            height=meteorological_data.get('height', 0.0),
+        )
+
+        # Return features in consistent order
+        feature_names = self.gw_detector.get_feature_names()
+        return [gw_feat_dict[name] for name in feature_names]
+
+    def _generate_synthetic_weather_data(
+        self,
+        precipitation_rate: float,
+        timestamp: datetime,
+    ) -> Dict:
+        """
+        Generate synthetic meteorological data for gravity wave detection.
+
+        This is a fallback for when real weather data is not available.
+        In production, replace with actual weather API/model data.
+
+        Args:
+            precipitation_rate: Current rainfall (mm/h)
+            timestamp: Current timestamp
+
+        Returns:
+            Dict with synthetic weather parameters
+        """
+        import random
+        random.seed(int(timestamp.timestamp()))
+
+        # Base temperature varies with season and time of day
+        season_temp = 288.15 + 10 * np.sin(2 * np.pi * timestamp.month / 12)
+        diurnal_temp = 5 * np.cos(2 * np.pi * timestamp.hour / 24)
+        base_temp = season_temp + diurnal_temp
+
+        # Rainfall correlates with lower pressure and temperature variations
+        pressure_anomaly = -precipitation_rate * 0.5  # Heavy rain = low pressure
+        base_pressure = 1013.25 + pressure_anomaly
+
+        # Generate time series (last 12 hours, hourly)
+        n_steps = 12
+        temps = np.zeros(n_steps)
+        pressures = np.zeros(n_steps)
+        timestamps_unix = np.zeros(n_steps)
+
+        for i in range(n_steps):
+            hours_ago = n_steps - i - 1
+            past_time = timestamp - timedelta(hours=hours_ago)
+
+            # Temperature with realistic variations
+            past_season = 288.15 + 10 * np.sin(2 * np.pi * past_time.month / 12)
+            past_diurnal = 5 * np.cos(2 * np.pi * past_time.hour / 24)
+            temps[i] = past_season + past_diurnal + random.gauss(0, 1.5)
+
+            # Pressure with gravity wave oscillations
+            wave_period = 45  # minutes
+            wave_amplitude = 1.5  # hPa
+            wave_phase = 2 * np.pi * hours_ago * 60 / wave_period
+            pressures[i] = base_pressure + wave_amplitude * np.sin(wave_phase) + random.gauss(0, 0.5)
+
+            timestamps_unix[i] = past_time.timestamp()
+
+        # CAPE increases with instability (higher with rainfall)
+        cape = min(precipitation_rate * 100, 2500)
+
+        # Cloud top height increases with precipitation intensity
+        cloud_top = 5000 + min(precipitation_rate * 300, 10000)
+
+        # Synthetic wind data (simple model)
+        u_wind = np.random.randn(n_steps) * 5 + precipitation_rate * 0.5
+        v_wind = np.random.randn(n_steps) * 5
+        w_wind = np.random.randn(n_steps) * 0.5 + precipitation_rate * 0.1
+
+        return {
+            'temperature': temps[-1],
+            'pressure': pressures[-1],
+            'temperature_history': temps,
+            'pressure_history': pressures,
+            'timestamp_history': timestamps_unix,
+            'cape': cape,
+            'cloud_top': cloud_top,
+            'u_wind': u_wind,
+            'v_wind': v_wind,
+            'w_wind': w_wind,
+            'height': 0.0,
+        }
+
     def get_feature_names(self) -> List[str]:
         """Get feature names for logging/debugging."""
         names = [
@@ -218,6 +369,11 @@ class RainFeatureBuilder:
             "hour_cos",
             "storm_tendency",
         ]
+
+        # Add gravity wave features if enabled
+        if self.enable_gravity_waves and self.gw_detector is not None:
+            names.extend(self.gw_detector.get_feature_names())
+
         return names
 
 
