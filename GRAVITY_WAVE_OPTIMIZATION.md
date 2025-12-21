@@ -2,7 +2,9 @@
 
 ## 🌀 Overview
 
-This document describes the **Atmospheric Gravity Wave Detection** optimization added to the HazardStack rain prediction model. This optimization improves rainfall forecasting by detecting atmospheric ripples that precede convective precipitation events.
+This document describes the **Atmospheric Gravity Wave Detection** optimization added to the SPIRAL rain prediction model. This optimization improves rainfall forecasting by detecting atmospheric ripples that precede convective precipitation events.
+
+**SPIRAL: Structured Physics-Informed Representation-Augmented Learning from Atmospheric Gravity Wave Signals for Multi-Hazard Prediction in India and Real-Time Web and Mobile Risk Alerts**
 
 ## 📚 Scientific Background
 

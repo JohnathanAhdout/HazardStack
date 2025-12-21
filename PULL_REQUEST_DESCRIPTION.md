@@ -1,4 +1,6 @@
-# 🌍 Complete HazardStack Multi-Hazard Prediction System
+# 🌀 Complete SPIRAL Multi-Hazard Prediction System
+
+**SPIRAL: Structured Physics-Informed Representation-Augmented Learning from Atmospheric Gravity Wave Signals for Multi-Hazard Prediction in India and Real-Time Web and Mobile Risk Alerts**
 
 ## ✅ Summary
 
