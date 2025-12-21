@@ -347,90 +347,573 @@ Output: MMI Prediction (Modified Mercalli Intensity)
 - ✅ **Minimal overfitting**: Train-val gap of only 0.035
 - ✅ **Production ready**: All benchmarks exceeded
 
-## 🚀 Quick Start
+## 🚀 Quick Start - Step by Step
 
-### 1. Access the Prototypes (Fastest!)
+### Prerequisites - Install These First!
 
-**Web App** (2 minutes):
+Before starting, you need to install these tools:
+
+#### 1. **Node.js** (for web and mobile apps)
+
+**Check if you have it:**
 ```bash
+node --version
+npm --version
+```
+
+**If not installed:**
+- **macOS**:
+  ```bash
+  brew install node
+  ```
+- **Ubuntu/Debian**:
+  ```bash
+  curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+  sudo apt-get install -y nodejs
+  ```
+- **Windows**: Download from [nodejs.org](https://nodejs.org/) and install
+
+**Verify installation:**
+```bash
+node --version  # Should show v18.0.0 or higher
+npm --version   # Should show 9.0.0 or higher
+```
+
+#### 2. **Python 3.10+** (for ML models and API)
+
+**Check if you have it:**
+```bash
+python3 --version
+```
+
+**If not installed:**
+- **macOS**:
+  ```bash
+  brew install python@3.10
+  ```
+- **Ubuntu/Debian**:
+  ```bash
+  sudo apt-get update
+  sudo apt-get install python3.10 python3-pip
+  ```
+- **Windows**: Download from [python.org](https://www.python.org/)
+
+**Verify installation:**
+```bash
+python3 --version  # Should show 3.10.0 or higher
+pip3 --version
+```
+
+#### 3. **Git** (to clone the repository)
+
+**Check if you have it:**
+```bash
+git --version
+```
+
+**If not installed:**
+- **macOS**: `brew install git`
+- **Ubuntu/Debian**: `sudo apt-get install git`
+- **Windows**: Download from [git-scm.com](https://git-scm.com/)
+
+---
+
+### 📁 Project Structure - Where Everything Is
+
+After cloning, your directory will look like this:
+
+```
+HazardStack/                    ← You'll be here after cloning
+├── web-app/                    ← Web dashboard (Next.js)
+│   ├── package.json           ← Dependencies list
+│   ├── app/                   ← Main app code
+│   ├── components/            ← React components
+│   └── lib/                   ← API client
+│
+├── mobile-app/                ← Mobile app (React Native)
+│   ├── package.json          ← Dependencies list
+│   ├── App.tsx               ← Main app file
+│   └── src/                  ← App code
+│       ├── screens/          ← App screens
+│       ├── components/       ← Reusable components
+│       └── services/         ← API client
+│
+├── hazardstack/              ← Python ML models & API
+│   ├── pyproject.toml        ← Python dependencies
+│   ├── api/                  ← FastAPI backend
+│   ├── hazard/               ← ML models
+│   └── scripts/              ← Training scripts
+│
+├── docs/                     ← Documentation
+│   └── images/               ← Visualizations
+│
+├── README.md                 ← This file!
+└── requirements.txt          ← Python dependencies
+```
+
+---
+
+### 🌐 Option 1: Web Dashboard (Easiest - 3 Minutes!)
+
+This is the **fastest way** to see SPIRAL in action!
+
+#### Step 1: Get the Code
+
+```bash
+# Open terminal/command prompt
+# Navigate to where you want the project (e.g., Desktop)
+cd ~/Desktop  # macOS/Linux
+# or
+cd C:\Users\YourName\Desktop  # Windows
+
+# Clone the repository
+git clone https://github.com/JohnathanAhdout/HazardStack.git
+
+# Enter the project folder
+cd HazardStack
+
+# Verify you're in the right place
+pwd  # Should show .../HazardStack
+ls   # Should show web-app, mobile-app, hazardstack, etc.
+```
+
+#### Step 2: Enter Web App Directory
+
+```bash
+# From HazardStack directory
 cd web-app
+
+# Verify you're in the right place
+pwd  # Should show .../HazardStack/web-app
+ls   # Should see package.json, app/, components/, etc.
+```
+
+#### Step 3: Install Dependencies
+
+```bash
+# This will take 1-2 minutes
 npm install
+
+# You should see:
+# - Downloading packages
+# - "added XXX packages" at the end
+# - NO red error messages (warnings are OK)
+```
+
+**Common Issue - If `npm install` fails:**
+```bash
+# Clear npm cache and retry
+npm cache clean --force
+rm -rf node_modules package-lock.json
+npm install
+```
+
+#### Step 4: Start the Development Server
+
+```bash
 npm run dev
-# Open http://localhost:3000
 ```
 
-**Mobile App** (2 minutes):
+**You should see:**
+```
+> spiral-web@0.1.0 dev
+> next dev
+
+  ▲ Next.js 14.2.35
+  - Local:        http://localhost:3000
+  - ready in 2.1s
+```
+
+#### Step 5: Open in Browser
+
+1. **Open your web browser** (Chrome, Firefox, Safari, etc.)
+2. **Go to:** `http://localhost:3000`
+3. **You should see:**
+   - SPIRAL header at the top
+   - Interactive map in the center
+   - Statistics cards
+   - Recent events on the right
+
+**🎉 Success!** The web app is running with mock data (no backend needed).
+
+#### Step 6: Explore the App
+
+- **Click on the map** to select different locations
+- **View risk levels** in the right panel (LOW/MODERATE/HIGH/EXTREME)
+- **Check recent events** in the alerts list
+- **Refresh the page** to reload data
+
+**To Stop the Server:**
 ```bash
-cd mobile-app
+# Press Ctrl+C in the terminal
+```
+
+---
+
+### 📱 Option 2: Mobile App (5 Minutes)
+
+#### Step 1: Install Expo Go on Your Phone
+
+**On your phone:**
+- **iOS**: Open App Store → Search "Expo Go" → Install
+- **Android**: Open Play Store → Search "Expo Go" → Install
+
+#### Step 2: Navigate to Mobile App Directory
+
+```bash
+# From HazardStack directory (if you're in web-app, go back first)
+cd ..           # Go back to HazardStack directory
+cd mobile-app   # Enter mobile-app directory
+
+# Verify location
+pwd  # Should show .../HazardStack/mobile-app
+ls   # Should see package.json, App.tsx, src/, etc.
+```
+
+#### Step 3: Install Dependencies
+
+```bash
 npm install
+
+# Takes 1-2 minutes
+# Should end with "added XXX packages"
+```
+
+#### Step 4: Start Expo
+
+```bash
 npm start
-# Scan QR code with Expo Go app
 ```
 
-Both apps work with **mock data** out of the box - no backend required for demo!
+**You should see:**
+```
+› Press s │ switch to development build
+› Press a │ open Android
+› Press i │ open iOS simulator
+› Press w │ open web
 
-### 2. Run the Full System
-
-**With Docker** (5 minutes):
-```bash
-docker-compose up -d
-# Web:    http://localhost:3000
-# API:    http://localhost:8000
-# Mobile: npm start in mobile-app/
+› Metro waiting on exp://192.168.X.X:8081
 ```
 
-**Manual Setup**:
+**And a QR code will appear in the terminal!**
+
+#### Step 5: Scan QR Code with Your Phone
+
+**On iPhone:**
+1. Open **Camera** app
+2. Point at QR code
+3. Tap notification "Open in Expo Go"
+
+**On Android:**
+1. Open **Expo Go** app
+2. Tap "Scan QR Code"
+3. Point at QR code in terminal
+
+#### Step 6: Wait for App to Load
+
+- First time takes 30-60 seconds
+- Phone will show "Building JavaScript bundle..."
+- Then the app opens!
+
+**You should see:**
+- Home screen with risk card
+- Statistics (4 cards)
+- Recent events list
+
+#### Step 7: Explore All Screens
+
+Tap the tabs at the bottom:
+- **Home**: Dashboard with stats
+- **Map**: Interactive risk map
+- **Alerts**: Recent events list
+- **Settings**: App preferences
+
+**🎉 Success!** The mobile app is running with mock data.
+
+**To Stop:**
 ```bash
-# Backend API
+# Press Ctrl+C in the terminal
+```
+
+---
+
+### 🐍 Option 3: Full System with API Backend (10 Minutes)
+
+This runs everything together: Web + Mobile + API
+
+#### Step 1: Install Python Dependencies
+
+```bash
+# From HazardStack directory
+cd ..                # If in mobile-app, go back
+pwd                  # Should be in HazardStack/
+
+# Install Python packages
+pip3 install -r requirements.txt
+
+# This takes 2-3 minutes
+# Should end with "Successfully installed..."
+```
+
+**If you get permission errors:**
+```bash
+pip3 install --user -r requirements.txt
+```
+
+#### Step 2: Start the API Backend
+
+```bash
+# Make sure you're in HazardStack directory
 cd hazardstack
-pip install -e .
-python api/main.py
+python3 api/main.py
+```
 
-# Web App (new terminal)
+**You should see:**
+```
+INFO:     Started server process
+INFO:     Uvicorn running on http://127.0.0.1:8000
+INFO:     Application startup complete
+```
+
+**Test if it's working:**
+
+Open a **new terminal** and run:
+```bash
+curl http://localhost:8000/api/v1/health
+```
+
+Should return:
+```json
+{"status":"healthy"}
+```
+
+**Keep this terminal open!** (API is running here)
+
+#### Step 3: Start Web App (New Terminal)
+
+Open a **new terminal window/tab**:
+
+```bash
+# Navigate to project
+cd ~/Desktop/HazardStack  # Adjust path if needed
+
+# Go to web-app
 cd web-app
-npm install && npm run dev
 
-# Mobile App (new terminal)
+# Start dev server
+npm run dev
+```
+
+Open browser: `http://localhost:3000`
+
+**Keep this terminal open!**
+
+#### Step 4: Start Mobile App (New Terminal)
+
+Open **another new terminal**:
+
+```bash
+# Navigate to project
+cd ~/Desktop/HazardStack  # Adjust path
+
+# Go to mobile-app
 cd mobile-app
-npm install && npm start
+
+# Start Expo
+npm start
 ```
 
-### 3. Train Models (Optional)
+Scan QR code with Expo Go.
 
-#### Option 1: Gravity Wave Optimization (RECOMMENDED ⭐)
+**Now you have all three running:**
+- ✅ API: `http://localhost:8000`
+- ✅ Web: `http://localhost:3000`
+- ✅ Mobile: On your phone
+
+---
+
+### 🐳 Option 4: Docker (Advanced - If You Know Docker)
+
+Only do this if you have Docker installed!
+
 ```bash
-# Train with atmospheric gravity wave detection
-python3 run_gravity_wave_training.py
+# Check if you have Docker
+docker --version
 
-# View results
-cat results/GRAVITY_WAVE_SUMMARY.txt
-python3 scripts/generate_visualizations.py
+# Start everything
+docker-compose up -d
+
+# Wait 2-3 minutes for containers to start
+
+# Access:
+# Web:  http://localhost:3000
+# API:  http://localhost:8000
 ```
 
-#### Option 2: Standard Optimized Training
+---
+
+### ✅ Verification Checklist
+
+After starting, verify everything works:
+
+#### Web App Checklist
+- [ ] Page loads at `http://localhost:3000`
+- [ ] You see a map in the center
+- [ ] Statistics cards show numbers
+- [ ] No red errors in browser console (F12)
+
+#### Mobile App Checklist
+- [ ] App opens in Expo Go
+- [ ] Home screen shows risk card
+- [ ] Can navigate between tabs
+- [ ] Map shows markers
+
+#### API Checklist
+- [ ] Terminal shows "Uvicorn running"
+- [ ] `curl http://localhost:8000/api/v1/health` returns `{"status":"healthy"}`
+- [ ] No error messages in terminal
+
+---
+
+### 🐛 Common Problems & Solutions
+
+#### Problem: "npm: command not found"
+
+**Solution:** Install Node.js (see Prerequisites above)
+
+#### Problem: "python3: command not found"
+
+**Solution:** Install Python (see Prerequisites above)
+
+#### Problem: Port 3000 already in use
+
+**Solution:**
 ```bash
-# Train with standard optimizations
-python3 run_simple_optimized_training.py
+# Kill process on port 3000
+lsof -ti:3000 | xargs kill -9
 
-# View results
-cat results/OPTIMIZATION_RESULTS.txt
+# Or use different port
+npm run dev -- -p 3001
 ```
 
-### 4. Deploy to Production
+#### Problem: "Cannot find module 'next'"
 
-**Web App (Vercel)**:
+**Solution:**
 ```bash
 cd web-app
-vercel --prod
+rm -rf node_modules package-lock.json
+npm install
 ```
 
-**Mobile App (App Stores)**:
+#### Problem: Expo QR code won't scan
+
+**Solution:**
+- Make sure phone and computer are on same WiFi
+- Try typing the URL manually (shown in terminal)
+- Try `exp://192.168.X.X:8081` in Expo Go app
+
+#### Problem: Web app shows blank page
+
+**Solution:**
+```bash
+# Clear Next.js cache
+cd web-app
+rm -rf .next
+npm run dev
+```
+
+#### Problem: Mobile app crashes on start
+
+**Solution:**
 ```bash
 cd mobile-app
-eas build --platform all
+expo start -c  # Clear cache
 ```
 
-See [DEPLOYMENT.md](DEPLOYMENT.md) for complete deployment guide.
+#### Problem: API won't start
+
+**Solution:**
+```bash
+# Check if port 8000 is in use
+lsof -ti:8000 | xargs kill -9
+
+# Reinstall dependencies
+pip3 install --user -r requirements.txt
+```
+
+---
+
+### 📍 Where to Find Everything
+
+#### Web App Code
+- **Main page**: `web-app/app/page.tsx`
+- **Components**: `web-app/components/`
+- **API client**: `web-app/lib/api.ts`
+- **Styles**: `web-app/app/globals.css`
+
+#### Mobile App Code
+- **Main app**: `mobile-app/App.tsx`
+- **Screens**: `mobile-app/src/screens/`
+- **Components**: `mobile-app/src/components/`
+- **API client**: `mobile-app/src/services/api.ts`
+
+#### Backend API
+- **Main API**: `hazardstack/api/main.py`
+- **Models**: `hazardstack/hazard/models/`
+- **Training scripts**: Root directory (`run_*.py`)
+
+#### Documentation
+- **Web app guide**: `web-app/README.md`
+- **Mobile app guide**: `mobile-app/README.md`
+- **Deployment**: `DEPLOYMENT.md`
+- **Quick deploy**: `QUICKSTART_DEPLOYMENT.md`
+- **Prototype guide**: `PROTOTYPES_ACCESS.md`
+
+#### Generated Files
+- **Visualizations**: `docs/images/`
+- **Training results**: `results/`
+- **Models**: `models/` (after training)
+
+---
+
+### 🎯 Quick Reference
+
+**Start Web App:**
+```bash
+cd web-app && npm install && npm run dev
+# http://localhost:3000
+```
+
+**Start Mobile App:**
+```bash
+cd mobile-app && npm install && npm start
+# Scan QR code
+```
+
+**Start API:**
+```bash
+pip3 install -r requirements.txt
+cd hazardstack && python3 api/main.py
+# http://localhost:8000
+```
+
+**Stop Everything:**
+- Press `Ctrl+C` in each terminal
+
+---
+
+### 🆘 Still Having Issues?
+
+1. **Check Prerequisites**: Make sure Node.js and Python are installed
+2. **Check Directory**: Run `pwd` to see where you are
+3. **Read Error Messages**: They usually tell you what's wrong
+4. **Try Clean Install**: Delete `node_modules` and `npm install` again
+5. **Check Documentation**: See `PROTOTYPES_ACCESS.md` for detailed guide
+6. **Ask for Help**: Open an issue on GitHub with:
+   - What command you ran
+   - What error you got
+   - Your OS (Mac/Windows/Linux)
+   - Node/Python versions
 
 ## 📚 Documentation
 
