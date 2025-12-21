@@ -3,11 +3,11 @@ requires = ["setuptools>=65.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "hazardstack"
+name = "spiral"
 version = "0.1.0"
-description = "India Multi-Hazard Nowcasting System (Monsoon Flood + Earthquake + Aftershock)"
+description = "SPIRAL: Structured Physics-Informed Representation-Augmented Learning from Atmospheric Gravity Wave Signals for Multi-Hazard Prediction in India and Real-Time Web and Mobile Risk Alerts"
 authors = [
-    {name = "HazardStack Team"}
+    {name = "SPIRAL Team"}
 ]
 requires-python = ">=3.10"
 dependencies = [

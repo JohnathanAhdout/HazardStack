@@ -1,4 +1,6 @@
-# HazardStack Training System - Complete Implementation
+# SPIRAL Training System - Complete Implementation
+
+**SPIRAL: Structured Physics-Informed Representation-Augmented Learning from Atmospheric Gravity Wave Signals for Multi-Hazard Prediction in India and Real-Time Web and Mobile Risk Alerts**
 
 ## Overview
 

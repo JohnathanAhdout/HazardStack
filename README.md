@@ -1,4 +1,4 @@
-# 🌍 HazardStack - Multi-Hazard Prediction System
+# 🌀 SPIRAL: Structured Physics-Informed Representation-Augmented Learning from Atmospheric Gravity Wave Signals for Multi-Hazard Prediction in India and Real-Time Web and Mobile Risk Alerts
 
 [![Tests](https://img.shields.io/badge/tests-6%2F6%20passing-brightgreen)]()
 [![RMSE](https://img.shields.io/badge/RMSE-0.39%20MMI-success)]()
@@ -9,7 +9,7 @@
 
 ## 🎯 Overview
 
-Advanced deep learning system for predicting earthquakes, floods, and rainfall hazards using real-time data from USGS and other sources.
+Advanced deep learning system for predicting earthquakes, floods, and rainfall hazards using real-time data from USGS and other sources, with atmospheric gravity wave detection for enhanced prediction accuracy.
 
 **🌀 NEW: Atmospheric Gravity Wave Detection** for enhanced rainfall prediction!
 

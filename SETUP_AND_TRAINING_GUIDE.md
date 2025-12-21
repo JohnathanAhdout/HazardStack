@@ -1,8 +1,10 @@
-# HazardStack Setup and Training Guide
+# SPIRAL Setup and Training Guide
+
+**SPIRAL: Structured Physics-Informed Representation-Augmented Learning from Atmospheric Gravity Wave Signals for Multi-Hazard Prediction in India and Real-Time Web and Mobile Risk Alerts**
 
 ## Quick Start
 
-This guide will help you set up, train, and evaluate the complete HazardStack multi-hazard prediction system.
+This guide will help you set up, train, and evaluate the complete SPIRAL multi-hazard prediction system.
 
 ## Prerequisites
 

@@ -1,4 +1,9 @@
-"""Type definitions for the HazardStack system."""
+"""Type definitions for the SPIRAL system.
+
+SPIRAL: Structured Physics-Informed Representation-Augmented Learning from
+Atmospheric Gravity Wave Signals for Multi-Hazard Prediction in India and
+Real-Time Web and Mobile Risk Alerts
+"""
 
 from typing import TypedDict, Literal, Optional
 from datetime import datetime

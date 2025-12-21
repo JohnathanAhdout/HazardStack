@@ -1,8 +1,10 @@
-# HazardStack Training and Evaluation Results
+# SPIRAL Training and Evaluation Results
+
+**SPIRAL: Structured Physics-Informed Representation-Augmented Learning from Atmospheric Gravity Wave Signals for Multi-Hazard Prediction in India and Real-Time Web and Mobile Risk Alerts**
 
 ## Executive Summary
 
-This document provides comprehensive documentation and results for the HazardStack multi-hazard prediction system. The system consists of three deep learning models for predicting earthquakes, floods, and rainfall hazards across India.
+This document provides comprehensive documentation and results for the SPIRAL multi-hazard prediction system. The system consists of three deep learning models for predicting earthquakes, floods, and rainfall hazards across India.
 
 ## System Architecture
 

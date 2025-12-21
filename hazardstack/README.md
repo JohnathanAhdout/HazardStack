@@ -1,4 +1,4 @@
-# HazardStack: India Multi-Hazard Nowcasting System
+# SPIRAL: Structured Physics-Informed Representation-Augmented Learning from Atmospheric Gravity Wave Signals for Multi-Hazard Prediction in India and Real-Time Web and Mobile Risk Alerts
 
 **Monsoon Flood + Earthquake Impact + Aftershock Prediction with Novel Readability Architecture**
 
@@ -7,7 +7,7 @@
 
 ## Overview
 
-HazardStack is a **rigorous, publication-quality** multi-hazard nowcasting and forecasting system tailored for India. Instead of claiming to "predict earthquakes" (which the field does not support), it provides what emergency systems actually need:
+SPIRAL is a **rigorous, publication-quality** multi-hazard nowcasting and forecasting system tailored for India. Instead of claiming to "predict earthquakes" (which the field does not support), it provides what emergency systems actually need:
 
 - **Probabilistic hazard nowcasting + forecasting** with calibrated uncertainties
 - **Real-time alerting** with geofencing
@@ -428,11 +428,11 @@ See `CONTRIBUTING.md` for guidelines.
 
 ## Citation
 
-If you use HazardStack in your research, please cite:
+If you use SPIRAL in your research, please cite:
 
 ```bibtex
-@software{hazardstack2025,
-  title={HazardStack: India Multi-Hazard Nowcasting with Readability Architecture},
+@software{spiral2025,
+  title={SPIRAL: Structured Physics-Informed Representation-Augmented Learning from Atmospheric Gravity Wave Signals for Multi-Hazard Prediction in India and Real-Time Web and Mobile Risk Alerts},
   author={[Your Name]},
   year={2025},
   url={https://github.com/yourusername/hazardstack}
@@ -456,7 +456,7 @@ MIT License - see LICENSE file for details.
 
 - **Issues**: [GitHub Issues](https://github.com/yourusername/hazardstack/issues)
 - **Email**: your.email@example.com
-- **Documentation**: [Full docs](https://hazardstack.readthedocs.io) (coming soon)
+- **Documentation**: [Full docs](https://spiral.readthedocs.io) (coming soon)
 
 ---
 
