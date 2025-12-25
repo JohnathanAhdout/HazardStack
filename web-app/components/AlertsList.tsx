@@ -36,12 +36,46 @@ function EventCard({ event }: { event: any }) {
     return 'text-green-700 bg-green-50'
   }
 
+  const getRiskLevelColor = (level: string) => {
+    if (level === 'EXTREME' || level === 'HIGH') return 'text-red-700 bg-red-50'
+    if (level === 'MODERATE') return 'text-yellow-700 bg-yellow-50'
+    return 'text-green-700 bg-green-50'
+  }
+
+  // Handle flood events
+  if (event.type === 'flood') {
+    return (
+      <div className="border border-gray-200 rounded-lg p-3 hover:shadow-md transition">
+        <div className="flex items-start justify-between mb-2">
+          <div className="flex items-center space-x-2">
+            <div className={`px-2 py-1 rounded font-bold text-sm ${getRiskLevelColor(event.risk_level)}`}>
+              {event.risk_level}
+            </div>
+            <span className="text-sm font-semibold text-gray-700">
+              {event.basin || 'Flood Alert'}
+            </span>
+          </div>
+        </div>
+        <div className="space-y-1 text-xs text-gray-600">
+          <p>{event.message}</p>
+          <div className="flex items-center">
+            <Clock className="w-3 h-3 mr-1" />
+            <span>
+              {event.time ? formatDistanceToNow(new Date(event.time), { addSuffix: true }) : 'Unknown time'}
+            </span>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Handle earthquake events
   return (
     <div className="border border-gray-200 rounded-lg p-3 hover:shadow-md transition">
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center space-x-2">
           <div className={`px-2 py-1 rounded font-bold text-sm ${getMagnitudeColor(event.magnitude)}`}>
-            M {event.magnitude.toFixed(1)}
+            M {event.magnitude?.toFixed(1) || 'N/A'}
           </div>
           <span className="text-sm font-semibold text-gray-700">
             {event.place || 'Unknown Location'}
@@ -64,6 +98,12 @@ function EventCard({ event }: { event: any }) {
           <span>
             {event.time ? formatDistanceToNow(new Date(event.time), { addSuffix: true }) : 'Unknown time'}
           </span>
+          {event.source && (
+            <>
+              <span className="mx-2">•</span>
+              <span>Source: {event.source}</span>
+            </>
+          )}
         </div>
       </div>
     </div>

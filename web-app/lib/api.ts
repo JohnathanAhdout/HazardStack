@@ -51,11 +51,39 @@ export async function fetchRecentEvents(
         min_magnitude,
       },
     })
-    return response.data.events || []
+    // Combine earthquakes and flood bulletins into a single events array
+    const earthquakes = (response.data.earthquakes || []).map((eq: any) => ({
+      type: 'earthquake',
+      magnitude: eq.magnitude,
+      place: eq.location,
+      coordinates: [eq.longitude, eq.latitude],
+      depth: eq.depth_km,
+      time: eq.time,
+      event_id: eq.event_id,
+      source: eq.source,
+    }))
+    const floods = (response.data.flood_bulletins || []).map((fb: any) => ({
+      type: 'flood',
+      basin: fb.basin_name,
+      risk_level: fb.risk_level,
+      message: fb.message,
+      time: fb.issued_at,
+    }))
+    return [...earthquakes, ...floods]
   } catch (error) {
     console.error('Error fetching recent events:', error)
     // Return mock data if API is unavailable
     return getMockEvents()
+  }
+}
+
+export async function fetchEventDetails(event_id: string): Promise<any> {
+  try {
+    const response = await api.get(`/api/v1/events/earthquake/${event_id}`)
+    return response.data
+  } catch (error) {
+    console.error('Error fetching event details:', error)
+    return null
   }
 }
 
