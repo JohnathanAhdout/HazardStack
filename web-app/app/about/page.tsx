@@ -1,14 +1,30 @@
 'use client'
 
 import Header from '@/components/Header'
-import { Shield, Zap, Globe, BarChart3, AlertTriangle, Cloud } from 'lucide-react'
+import { Shield, Zap, Globe, BarChart3, AlertTriangle, Cloud, Info, HelpCircle } from 'lucide-react'
+import { useState } from 'react'
 
 export default function About() {
+  const [showFAQ, setShowFAQ] = useState(false)
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
 
       <main className="container mx-auto px-4 py-6">
+        {/* Info Banner */}
+        <div className="bg-blue-50 border-l-4 border-blue-500 rounded-lg shadow p-4 mb-6">
+          <div className="flex items-start">
+            <Info className="w-5 h-5 text-blue-600 mr-3 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="text-sm text-gray-900 font-semibold mb-1">About This System</p>
+              <p className="text-sm text-gray-700">
+                Learn about SPIRAL's capabilities, the technology behind it, how predictions are made, and the data sources powering our multi-hazard early warning system.
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Hero Section */}
         <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-lg shadow-lg p-8 mb-6">
           <h1 className="text-4xl font-bold mb-4">About SPIRAL</h1>
@@ -169,6 +185,66 @@ export default function About() {
               </p>
             </div>
           </div>
+        </div>
+
+        {/* FAQ Section */}
+        <div className="bg-white rounded-lg shadow p-6 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-2xl font-bold text-gray-900">Frequently Asked Questions</h2>
+            <button
+              onClick={() => setShowFAQ(!showFAQ)}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition"
+            >
+              <HelpCircle className="w-4 h-4" />
+              {showFAQ ? 'Hide FAQ' : 'Show FAQ'}
+            </button>
+          </div>
+
+          {showFAQ && (
+            <div className="space-y-4">
+              <div className="border-l-4 border-blue-500 pl-4 py-2">
+                <h3 className="font-bold text-gray-900 mb-1">How accurate are the predictions?</h3>
+                <p className="text-sm text-gray-700">
+                  Our models achieve 92-95% accuracy (R² score) for earthquake shaking and rainfall predictions. Models are validated against historical data and continuously improved.
+                </p>
+              </div>
+
+              <div className="border-l-4 border-green-500 pl-4 py-2">
+                <h3 className="font-bold text-gray-900 mb-1">What do the risk levels mean?</h3>
+                <p className="text-sm text-gray-700">
+                  <strong className="text-gray-900">LOW:</strong> Minimal risk, normal activities. <strong className="text-gray-900">MODERATE:</strong> Monitor conditions, prepare precautions. <strong className="text-gray-900">HIGH:</strong> Significant risk, take protective actions. <strong className="text-gray-900">EXTREME:</strong> Severe risk, evacuate if advised.
+                </p>
+              </div>
+
+              <div className="border-l-4 border-purple-500 pl-4 py-2">
+                <h3 className="font-bold text-gray-900 mb-1">How often is data updated?</h3>
+                <p className="text-sm text-gray-700">
+                  Earthquake data updates every 5 minutes from USGS. Weather and flood data updates hourly. Risk predictions are regenerated every 15-30 minutes.
+                </p>
+              </div>
+
+              <div className="border-l-4 border-orange-500 pl-4 py-2">
+                <h3 className="font-bold text-gray-900 mb-1">Can I use this for my organization?</h3>
+                <p className="text-sm text-gray-700">
+                  Yes! SPIRAL is open-source. For commercial use, custom deployments, or API access, please contact us through GitHub or check our documentation for integration guides.
+                </p>
+              </div>
+
+              <div className="border-l-4 border-red-500 pl-4 py-2">
+                <h3 className="font-bold text-gray-900 mb-1">What should I do during a high-risk alert?</h3>
+                <p className="text-sm text-gray-700">
+                  Follow official emergency guidelines for your region. SPIRAL provides early warnings - always defer to local authorities for evacuation orders and emergency procedures. Prepare emergency supplies and have an evacuation plan ready.
+                </p>
+              </div>
+
+              <div className="border-l-4 border-cyan-500 pl-4 py-2">
+                <h3 className="font-bold text-gray-900 mb-1">How does this differ from traditional forecasts?</h3>
+                <p className="text-sm text-gray-700">
+                  Traditional forecasts focus on single hazards. SPIRAL integrates multiple hazards (earthquakes, floods, rainfall) and uses machine learning to detect precursor signals like atmospheric gravity waves, providing earlier and more accurate warnings.
+                </p>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Contact & Links */}
