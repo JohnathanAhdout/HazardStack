@@ -32,6 +32,21 @@ interface MapViewProps {
   riskData: any
 }
 
+// Component to handle map click events
+function MapClickHandler({ onLocationSelect }: { onLocationSelect: (lat: number, lon: number) => void }) {
+  if (typeof window === 'undefined') return null
+
+  const { useMapEvents } = require('react-leaflet')
+
+  useMapEvents({
+    click: (e: any) => {
+      onLocationSelect(e.latlng.lat, e.latlng.lng)
+    },
+  })
+
+  return null
+}
+
 export default function MapView({ onLocationSelect, selectedLocation, riskData }: MapViewProps) {
   useEffect(() => {
     // Import Leaflet CSS on client side only
@@ -69,6 +84,7 @@ export default function MapView({ onLocationSelect, selectedLocation, riskData }
         style={{ height: '100%', width: '100%' }}
         scrollWheelZoom={true}
       >
+        <MapClickHandler onLocationSelect={onLocationSelect} />
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

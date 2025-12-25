@@ -4,6 +4,7 @@ from fastapi import APIRouter, Query
 from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime, timedelta
+from ..services.earthquake_service import USGSEarthquakeService
 
 router = APIRouter()
 
@@ -70,35 +71,24 @@ async def get_recent_events(
     earthquakes = []
     flood_bulletins = []
 
-    # TODO: Fetch from database/cache
-    # For now, return mock data
-
     if include_earthquakes:
-        # Mock earthquake data
-        earthquakes = [
-            EarthquakeEvent(
-                event_id="ncs_2024_001234",
-                time=datetime.utcnow() - timedelta(hours=2),
-                latitude=28.5,
-                longitude=77.2,
-                depth_km=10.0,
-                magnitude=4.2,
-                magnitude_type="Mw",
-                source="NCS",
-                location="Delhi NCR",
-            ),
-            EarthquakeEvent(
-                event_id="ncs_2024_001235",
-                time=datetime.utcnow() - timedelta(hours=12),
-                latitude=26.9,
-                longitude=88.4,
-                depth_km=15.0,
-                magnitude=3.8,
-                magnitude_type="ML",
-                source="NCS",
-                location="Sikkim",
-            ),
-        ]
+        # Fetch real earthquake data from USGS
+        # Focus on South Asia region (India and surrounding areas)
+        earthquakes = await USGSEarthquakeService.fetch_recent_earthquakes(
+            hours=hours,
+            min_magnitude=min_magnitude,
+            min_lat=5.0,  # Southern tip of India
+            max_lat=37.0,  # Northern India/Himalayas
+            min_lon=65.0,  # Western border
+            max_lon=98.0,  # Eastern border (includes Andaman)
+        )
+
+        # If no regional earthquakes found, get global significant events
+        if not earthquakes:
+            earthquakes = await USGSEarthquakeService.fetch_recent_earthquakes(
+                hours=hours,
+                min_magnitude=max(min_magnitude, 4.5),  # Higher threshold for global
+            )
 
     if include_floods:
         # Mock flood bulletin
@@ -132,9 +122,34 @@ async def get_earthquake_details(event_id: str):
     Returns:
         Detailed event information including aftershock forecast
     """
-    # TODO: Implement
+    details = await USGSEarthquakeService.fetch_earthquake_details(event_id)
+
+    if not details:
+        return {
+            "event_id": event_id,
+            "error": "Event not found",
+            "message": f"Could not find earthquake event with ID: {event_id}",
+        }
+
+    # Calculate simple aftershock probability based on magnitude
+    # Using simplified Omori's law: higher magnitude = more aftershocks
+    magnitude = details.get("magnitude", 0)
+    aftershock_probability = min(0.95, max(0.05, (magnitude - 4.0) / 5.0))
+
     return {
         "event_id": event_id,
-        "detail": "Not implemented yet",
-        "message": "This endpoint will return detailed event info + impact map + aftershock forecast",
+        "details": details,
+        "aftershock_forecast": {
+            "probability_24h": aftershock_probability,
+            "expected_count_24h": int(aftershock_probability * 100),
+            "magnitude_range": [magnitude - 2, magnitude - 0.5],
+            "model": "simplified_omori",
+            "note": "Simplified forecast - actual aftershock behavior may vary",
+        },
+        "impact_assessment": {
+            "intensity": details.get("mmi"),
+            "felt_reports": details.get("felt_reports"),
+            "alert_level": details.get("alert"),
+            "tsunami_warning": details.get("tsunami", False),
+        },
     }

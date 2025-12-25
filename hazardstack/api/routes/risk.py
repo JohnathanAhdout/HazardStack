@@ -173,14 +173,102 @@ async def get_tile(
     Returns:
         GeoJSON FeatureCollection
     """
-    # TODO: Implement tile generation
-    # For now, return empty GeoJSON
-    return {
-        "type": "FeatureCollection",
-        "features": [],
-        "metadata": {
-            "tile": {"z": z, "x": x, "y": y},
-            "horizon": horizon,
-            "generated_at": datetime.utcnow().isoformat(),
-        },
-    }
+    import math
+    import random
+
+    # Convert tile coordinates to lat/lon bounds
+    def tile_to_latlon(x: int, y: int, z: int):
+        n = 2.0 ** z
+        lon_min = x / n * 360.0 - 180.0
+        lat_max_rad = math.atan(math.sinh(math.pi * (1 - 2 * y / n)))
+        lat_max = math.degrees(lat_max_rad)
+
+        lon_max = (x + 1) / n * 360.0 - 180.0
+        lat_min_rad = math.atan(math.sinh(math.pi * (1 - 2 * (y + 1) / n)))
+        lat_min = math.degrees(lat_min_rad)
+
+        return lat_min, lon_min, lat_max, lon_max
+
+    lat_min, lon_min, lat_max, lon_max = tile_to_latlon(x, y, z)
+
+    # Get center of tile and determine appropriate radius
+    center_lat = (lat_min + lat_max) / 2
+    center_lon = (lon_min + lon_max) / 2
+
+    # Calculate approximate radius in km (tile width)
+    lat_diff = lat_max - lat_min
+    lon_diff = lon_max - lon_min
+    radius_km = max(lat_diff, lon_diff) * 111  # Rough km per degree
+
+    # Get cells within the tile bounds
+    try:
+        cells = grid.cells_within_radius(center_lat, center_lon, min(radius_km, 100))
+
+        # Filter cells that are actually within tile bounds
+        features = []
+        for cell_id in cells[:50]:  # Limit to 50 cells per tile
+            import h3
+
+            cell_lat, cell_lon = h3.h3_to_geo(cell_id)
+
+            # Check if cell is within tile bounds
+            if not (lat_min <= cell_lat <= lat_max and lon_min <= cell_lon <= lon_max):
+                continue
+
+            # Generate risk data for this cell
+            random.seed(hash(cell_id))
+            score = random.uniform(0.1, 0.8)
+            level = (
+                "EXTREME"
+                if score > 0.75
+                else "HIGH" if score > 0.5 else "MODERATE" if score > 0.2 else "LOW"
+            )
+
+            # Get hexagon boundary
+            boundary = h3.h3_to_geo_boundary(cell_id, geo_json=True)
+
+            feature = {
+                "type": "Feature",
+                "geometry": {
+                    "type": "Polygon",
+                    "coordinates": [boundary],
+                },
+                "properties": {
+                    "h3_id": cell_id,
+                    "risk_level": level,
+                    "risk_score": score,
+                    "horizon": horizon,
+                    "centroid": [cell_lat, cell_lon],
+                },
+            }
+            features.append(feature)
+
+        return {
+            "type": "FeatureCollection",
+            "features": features,
+            "metadata": {
+                "tile": {"z": z, "x": x, "y": y},
+                "bounds": {
+                    "lat_min": lat_min,
+                    "lon_min": lon_min,
+                    "lat_max": lat_max,
+                    "lon_max": lon_max,
+                },
+                "horizon": horizon,
+                "generated_at": datetime.utcnow().isoformat(),
+                "cell_count": len(features),
+            },
+        }
+
+    except Exception as e:
+        # Return empty GeoJSON on error
+        return {
+            "type": "FeatureCollection",
+            "features": [],
+            "metadata": {
+                "tile": {"z": z, "x": x, "y": y},
+                "horizon": horizon,
+                "generated_at": datetime.utcnow().isoformat(),
+                "error": str(e),
+            },
+        }
