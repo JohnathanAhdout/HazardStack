@@ -108,7 +108,7 @@ export default function Notifications() {
       <main className="container mx-auto px-4 py-6">
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold mb-2 flex items-center">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center">
               <Bell className="w-8 h-8 mr-3" />
               Notifications
               {unreadCount > 0 && (
@@ -167,7 +167,7 @@ export default function Notifications() {
           ) : filteredNotifications.length === 0 ? (
             <div className="bg-white rounded-lg shadow p-12 text-center">
               <CheckCircle className="w-16 h-16 mx-auto text-green-500 mb-4" />
-              <p className="text-xl font-semibold mb-2">All caught up!</p>
+              <p className="text-xl font-semibold text-gray-900 mb-2">All caught up!</p>
               <p className="text-gray-600">No {filter === 'all' ? '' : filter} notifications to show</p>
             </div>
           ) : (
@@ -219,7 +219,7 @@ function NotificationCard({ notification, onRead, onDelete }: any) {
           <div className="mt-1">{getIcon()}</div>
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
-              <h3 className="font-bold text-lg">{notification.title}</h3>
+              <h3 className="font-bold text-lg text-gray-900">{notification.title}</h3>
               {!notification.read && (
                 <span className="px-2 py-0.5 bg-blue-500 text-white text-xs rounded-full">NEW</span>
               )}

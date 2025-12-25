@@ -10,7 +10,7 @@ interface AlertsListProps {
 export default function AlertsList({ events }: AlertsListProps) {
   return (
     <div className="bg-white rounded-lg shadow-lg p-6">
-      <h2 className="text-xl font-bold mb-4 flex items-center">
+      <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
         <AlertCircle className="w-5 h-5 mr-2 text-red-500" />
         Recent Events
       </h2>

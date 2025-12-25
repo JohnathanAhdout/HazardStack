@@ -44,7 +44,7 @@ export default function Alerts() {
 
       <main className="container mx-auto px-4 py-6">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold mb-2">Recent Alerts & Events</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Recent Alerts & Events</h1>
           <p className="text-gray-600">Real-time monitoring of seismic activity and flood warnings</p>
         </div>
 
@@ -93,7 +93,7 @@ export default function Alerts() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Events List */}
           <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-bold mb-4 flex items-center">
+            <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
               <AlertCircle className="w-5 h-5 mr-2 text-red-500" />
               Events ({events.length})
             </h2>
@@ -118,7 +118,7 @@ export default function Alerts() {
 
           {/* Event Details */}
           <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-bold mb-4">Event Details</h2>
+            <h2 className="text-xl font-bold text-gray-900 mb-4">Event Details</h2>
 
             {!selectedEvent ? (
               <p className="text-gray-500 text-center py-8">Select an event to view details</p>
@@ -164,7 +164,7 @@ function EventCard({ event, onClick, isSelected }: any) {
           <div className={`px-2 py-1 rounded font-bold text-sm ${getRiskLevelColor(event.risk_level)}`}>
             {event.risk_level}
           </div>
-          <span className="text-sm font-semibold">{event.basin}</span>
+          <span className="text-sm font-semibold text-gray-900">{event.basin}</span>
         </div>
         <p className="text-xs text-gray-600">{event.message}</p>
       </div>
@@ -182,7 +182,7 @@ function EventCard({ event, onClick, isSelected }: any) {
         <div className={`px-2 py-1 rounded font-bold text-sm ${getMagnitudeColor(event.magnitude)}`}>
           M {event.magnitude?.toFixed(1)}
         </div>
-        <span className="text-sm font-semibold">{event.place}</span>
+        <span className="text-sm font-semibold text-gray-900">{event.place}</span>
       </div>
       <div className="text-xs text-gray-600">
         <Clock className="w-3 h-3 inline mr-1" />
@@ -196,31 +196,31 @@ function EarthquakeDetails({ event, details }: any) {
   return (
     <div className="space-y-4">
       <div>
-        <h3 className="font-bold text-lg mb-2">{event.place}</h3>
+        <h3 className="font-bold text-lg text-gray-900 mb-2">{event.place}</h3>
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div>
             <span className="text-gray-600">Magnitude:</span>
-            <span className="font-semibold ml-2">{event.magnitude?.toFixed(1)}</span>
+            <span className="font-semibold text-gray-900 ml-2">{event.magnitude?.toFixed(1)}</span>
           </div>
           <div>
             <span className="text-gray-600">Depth:</span>
-            <span className="font-semibold ml-2">{event.depth?.toFixed(1)} km</span>
+            <span className="font-semibold text-gray-900 ml-2">{event.depth?.toFixed(1)} km</span>
           </div>
           <div>
             <span className="text-gray-600">Latitude:</span>
-            <span className="font-semibold ml-2">{event.coordinates?.[1]?.toFixed(4)}°</span>
+            <span className="font-semibold text-gray-900 ml-2">{event.coordinates?.[1]?.toFixed(4)}°</span>
           </div>
           <div>
             <span className="text-gray-600">Longitude:</span>
-            <span className="font-semibold ml-2">{event.coordinates?.[0]?.toFixed(4)}°</span>
+            <span className="font-semibold text-gray-900 ml-2">{event.coordinates?.[0]?.toFixed(4)}°</span>
           </div>
           <div>
             <span className="text-gray-600">Source:</span>
-            <span className="font-semibold ml-2">{event.source || 'N/A'}</span>
+            <span className="font-semibold text-gray-900 ml-2">{event.source || 'N/A'}</span>
           </div>
           <div>
             <span className="text-gray-600">Time:</span>
-            <span className="font-semibold ml-2">
+            <span className="font-semibold text-gray-900 ml-2">
               {event.time ? formatDistanceToNow(new Date(event.time), { addSuffix: true }) : 'N/A'}
             </span>
           </div>
@@ -229,16 +229,16 @@ function EarthquakeDetails({ event, details }: any) {
 
       {details?.aftershock_forecast && (
         <div className="border-t pt-4">
-          <h4 className="font-bold mb-2 flex items-center">
+          <h4 className="font-bold text-gray-900 mb-2 flex items-center">
             <TrendingUp className="w-4 h-4 mr-2" />
             Aftershock Forecast
           </h4>
           <div className="bg-yellow-50 border border-yellow-200 rounded p-3 text-sm">
-            <p className="mb-2">
+            <p className="text-gray-900 mb-2">
               <span className="font-semibold">24h Probability:</span>{' '}
               {(details.aftershock_forecast.probability_24h * 100).toFixed(0)}%
             </p>
-            <p className="mb-2">
+            <p className="text-gray-900 mb-2">
               <span className="font-semibold">Expected Count:</span>{' '}
               ~{details.aftershock_forecast.expected_count_24h} aftershocks
             </p>
@@ -249,18 +249,18 @@ function EarthquakeDetails({ event, details }: any) {
 
       {details?.impact_assessment && (
         <div className="border-t pt-4">
-          <h4 className="font-bold mb-2">Impact Assessment</h4>
+          <h4 className="font-bold text-gray-900 mb-2">Impact Assessment</h4>
           <div className="space-y-2 text-sm">
             {details.impact_assessment.alert_level && (
               <div>
                 <span className="text-gray-600">Alert Level:</span>
-                <span className="font-semibold ml-2 uppercase">{details.impact_assessment.alert_level}</span>
+                <span className="font-semibold text-gray-900 ml-2 uppercase">{details.impact_assessment.alert_level}</span>
               </div>
             )}
             {details.impact_assessment.felt_reports && (
               <div>
                 <span className="text-gray-600">Felt Reports:</span>
-                <span className="font-semibold ml-2">{details.impact_assessment.felt_reports}</span>
+                <span className="font-semibold text-gray-900 ml-2">{details.impact_assessment.felt_reports}</span>
               </div>
             )}
           </div>
@@ -274,7 +274,7 @@ function FloodDetails({ event }: any) {
   return (
     <div className="space-y-4">
       <div>
-        <h3 className="font-bold text-lg mb-2">{event.basin}</h3>
+        <h3 className="font-bold text-lg text-gray-900 mb-2">{event.basin}</h3>
         <div className="bg-blue-50 border border-blue-200 rounded p-4">
           <div className="mb-3">
             <span className="text-sm text-gray-600">Risk Level:</span>
@@ -284,7 +284,7 @@ function FloodDetails({ event }: any) {
               {event.risk_level}
             </span>
           </div>
-          <p className="text-sm">{event.message}</p>
+          <p className="text-sm text-gray-700">{event.message}</p>
         </div>
       </div>
     </div>

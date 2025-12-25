@@ -64,7 +64,7 @@ export default function SettingsPage() {
 
       <main className="container mx-auto px-4 py-6">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold mb-2 flex items-center">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center">
             <Settings className="w-8 h-8 mr-3" />
             Settings
           </h1>
@@ -72,7 +72,7 @@ export default function SettingsPage() {
         </div>
 
         {saved && (
-          <div className="mb-6 bg-green-50 border border-green-200 text-green-800 rounded-lg p-4">
+          <div className="mb-6 bg-green-50 border border-green-200 text-gray-900 rounded-lg p-4">
             Settings saved successfully!
           </div>
         )}
@@ -80,14 +80,14 @@ export default function SettingsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Notification Settings */}
           <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-bold mb-4 flex items-center">
+            <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
               <Bell className="w-5 h-5 mr-2" />
               Notifications
             </h2>
 
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <label className="text-sm font-medium">Earthquake Alerts</label>
+                <label className="text-sm font-medium text-gray-900">Earthquake Alerts</label>
                 <input
                   type="checkbox"
                   checked={settings.notifications.earthquakes}
@@ -97,7 +97,7 @@ export default function SettingsPage() {
               </div>
 
               <div className="flex items-center justify-between">
-                <label className="text-sm font-medium">Flood Alerts</label>
+                <label className="text-sm font-medium text-gray-900">Flood Alerts</label>
                 <input
                   type="checkbox"
                   checked={settings.notifications.floods}
@@ -107,7 +107,7 @@ export default function SettingsPage() {
               </div>
 
               <div>
-                <label className="text-sm font-medium block mb-2">
+                <label className="text-sm font-medium text-gray-900 block mb-2">
                   Minimum Magnitude: {settings.notifications.minMagnitude}
                 </label>
                 <input
@@ -126,7 +126,7 @@ export default function SettingsPage() {
               </div>
 
               <div className="flex items-center justify-between">
-                <label className="text-sm font-medium">Email Alerts</label>
+                <label className="text-sm font-medium text-gray-900">Email Alerts</label>
                 <input
                   type="checkbox"
                   checked={settings.notifications.emailAlerts}
@@ -136,7 +136,7 @@ export default function SettingsPage() {
               </div>
 
               <div className="flex items-center justify-between">
-                <label className="text-sm font-medium">Push Notifications</label>
+                <label className="text-sm font-medium text-gray-900">Push Notifications</label>
                 <input
                   type="checkbox"
                   checked={settings.notifications.pushNotifications}
@@ -149,14 +149,14 @@ export default function SettingsPage() {
 
           {/* Map Settings */}
           <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-bold mb-4 flex items-center">
+            <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
               <MapPin className="w-5 h-5 mr-2" />
               Map Preferences
             </h2>
 
             <div className="space-y-4">
               <div>
-                <label className="text-sm font-medium block mb-2">Default Location</label>
+                <label className="text-sm font-medium text-gray-900 block mb-2">Default Location</label>
                 <select
                   value={settings.map.defaultLocation.name}
                   onChange={(e) => {
@@ -178,7 +178,7 @@ export default function SettingsPage() {
               </div>
 
               <div>
-                <label className="text-sm font-medium block mb-2">
+                <label className="text-sm font-medium text-gray-900 block mb-2">
                   Default Zoom: {settings.map.defaultZoom}
                 </label>
                 <input
@@ -196,7 +196,7 @@ export default function SettingsPage() {
               </div>
 
               <div className="flex items-center justify-between">
-                <label className="text-sm font-medium">Show Risk Circles</label>
+                <label className="text-sm font-medium text-gray-900">Show Risk Circles</label>
                 <input
                   type="checkbox"
                   checked={settings.map.showRiskCircles}
@@ -206,7 +206,7 @@ export default function SettingsPage() {
               </div>
 
               <div>
-                <label className="text-sm font-medium block mb-2">Map Style</label>
+                <label className="text-sm font-medium text-gray-900 block mb-2">Map Style</label>
                 <select
                   value={settings.map.mapStyle}
                   onChange={(e) => updateMapSetting('mapStyle', e.target.value)}
@@ -222,14 +222,14 @@ export default function SettingsPage() {
 
           {/* Display Settings */}
           <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-bold mb-4 flex items-center">
+            <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
               <Eye className="w-5 h-5 mr-2" />
               Display
             </h2>
 
             <div className="space-y-4">
               <div>
-                <label className="text-sm font-medium block mb-2">Theme</label>
+                <label className="text-sm font-medium text-gray-900 block mb-2">Theme</label>
                 <select
                   value={settings.display.theme}
                   onChange={(e) => updateDisplaySetting('theme', e.target.value)}
@@ -242,7 +242,7 @@ export default function SettingsPage() {
               </div>
 
               <div>
-                <label className="text-sm font-medium block mb-2">Time Format</label>
+                <label className="text-sm font-medium text-gray-900 block mb-2">Time Format</label>
                 <select
                   value={settings.display.timeFormat}
                   onChange={(e) => updateDisplaySetting('timeFormat', e.target.value)}
@@ -254,7 +254,7 @@ export default function SettingsPage() {
               </div>
 
               <div>
-                <label className="text-sm font-medium block mb-2">Units</label>
+                <label className="text-sm font-medium text-gray-900 block mb-2">Units</label>
                 <select
                   value={settings.display.units}
                   onChange={(e) => updateDisplaySetting('units', e.target.value)}
@@ -266,7 +266,7 @@ export default function SettingsPage() {
               </div>
 
               <div className="flex items-center justify-between">
-                <label className="text-sm font-medium">Auto Refresh</label>
+                <label className="text-sm font-medium text-gray-900">Auto Refresh</label>
                 <input
                   type="checkbox"
                   checked={settings.display.autoRefresh}
@@ -277,7 +277,7 @@ export default function SettingsPage() {
 
               {settings.display.autoRefresh && (
                 <div>
-                  <label className="text-sm font-medium block mb-2">
+                  <label className="text-sm font-medium text-gray-900 block mb-2">
                     Refresh Interval: {settings.display.refreshInterval} min
                   </label>
                   <input
