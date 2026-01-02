@@ -10,11 +10,19 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from api.routes import risk, health, events
-from hazard.common.io import load_config
 
-
-# Load configuration
-config = load_config("configs/india_v1.yaml")
+# Default configuration (load_config disabled for now to avoid dependencies)
+config = {
+    "grid": {"h3_resolution": 4},
+    "time": {"horizons": ["1h", "6h", "12h", "24h"]},
+    "serving": {
+        "api": {
+            "cors_origins": ["*"],
+            "host": "0.0.0.0",
+            "port": 8000
+        }
+    }
+}
 
 
 @asynccontextmanager
@@ -22,9 +30,9 @@ async def lifespan(app: FastAPI):
     """Lifespan context manager for startup/shutdown."""
     # Startup
     print("🚀 HazardStack API starting up...")
-    print(f"   Config loaded from: configs/india_v1.yaml")
     print(f"   Grid resolution: H3 level {config['grid']['h3_resolution']}")
     print(f"   Horizons: {config['time']['horizons']}")
+    print("   Using real USGS earthquake data")
 
     yield
 

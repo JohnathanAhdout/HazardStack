@@ -8,6 +8,56 @@ import geopandas as gpd
 from pyproj import Transformer
 
 
+def _h3_latlng_to_cell(lat: float, lon: float, resolution: int) -> str:
+    """Convert lat/lng to H3 cell (compatible with h3 v3 and v4)."""
+    try:
+        return h3.latlng_to_cell(lat, lon, resolution)
+    except AttributeError:
+        return h3.geo_to_h3(lat, lon, resolution)
+
+
+def _h3_cell_to_latlng(cell: str) -> tuple:
+    """Convert H3 cell to lat/lng (compatible with h3 v3 and v4)."""
+    try:
+        return h3.cell_to_latlng(cell)
+    except AttributeError:
+        return h3.h3_to_geo(cell)
+
+
+def _h3_k_ring(cell: str, k: int) -> set:
+    """Get k-ring neighbors (compatible with h3 v3 and v4)."""
+    try:
+        return h3.grid_disk(cell, k)
+    except AttributeError:
+        return h3.k_ring(cell, k)
+
+
+def _h3_edge_length(resolution: int, unit: str = "km") -> float:
+    """Get average hexagon edge length (compatible with h3 v3 and v4)."""
+    try:
+        # h3 v4 API
+        return h3.average_hexagon_edge_length(resolution, unit)
+    except AttributeError:
+        # h3 v3 API
+        return h3.edge_length(resolution, unit=unit)
+
+
+def _h3_cell_area(cell: str, unit: str = "km^2") -> float:
+    """Get cell area (compatible with h3 v3 and v4)."""
+    return h3.cell_area(cell, unit=unit)
+
+
+def _h3_cell_to_boundary(cell: str) -> list:
+    """Get cell boundary coordinates (compatible with h3 v3 and v4)."""
+    try:
+        boundary = h3.cell_to_boundary(cell)
+        # v4 returns list of (lat, lon) tuples
+        return [(lat, lon) for lat, lon in boundary]
+    except AttributeError:
+        # v3 returns list in geo_json format
+        return h3.h3_to_geo_boundary(cell, geo_json=True)
+
+
 class H3Grid:
     """H3 hexagonal grid for India."""
 
@@ -33,7 +83,7 @@ class H3Grid:
 
         # Generate cells covering India
         self.cells = self._generate_cells()
-        self.cell_to_latlon = {cell: h3.h3_to_geo(cell) for cell in self.cells}
+        self.cell_to_latlon = {cell: _h3_cell_to_latlng(cell) for cell in self.cells}
 
     def _generate_cells(self) -> Set[str]:
         """Generate H3 cells covering the bounding box."""
@@ -54,7 +104,7 @@ class H3Grid:
 
         for lat in lats:
             for lon in lons:
-                cell = h3.geo_to_h3(lat, lon, self.resolution)
+                cell = _h3_latlng_to_cell(lat, lon, self.resolution)
                 cells.add(cell)
 
         return cells
@@ -81,7 +131,7 @@ class H3Grid:
                     cells.update(self._polyfill_polygon(poly))
 
         self.cells = cells
-        self.cell_to_latlon = {cell: h3.h3_to_geo(cell) for cell in cells}
+        self.cell_to_latlon = {cell: _h3_cell_to_latlng(cell) for cell in cells}
         return cells
 
     def _polyfill_polygon(self, polygon: Polygon) -> Set[str]:
@@ -104,7 +154,7 @@ class H3Grid:
             for lat in lats:
                 for lon in lons:
                     if polygon.contains(Point(lon, lat)):
-                        cells.add(h3.geo_to_h3(lat, lon, self.resolution))
+                        cells.add(_h3_latlng_to_cell(lat, lon, self.resolution))
 
         return cells
 
@@ -119,7 +169,7 @@ class H3Grid:
         Returns:
             List of neighbor cell IDs
         """
-        return list(h3.k_ring(cell, k))
+        return list(_h3_k_ring(cell, k))
 
     def get_distance_km(self, cell1: str, cell2: str) -> float:
         """
@@ -132,8 +182,8 @@ class H3Grid:
         Returns:
             Distance in kilometers
         """
-        lat1, lon1 = h3.h3_to_geo(cell1)
-        lat2, lon2 = h3.h3_to_geo(cell2)
+        lat1, lon1 = _h3_cell_to_latlng(cell1)
+        lat2, lon2 = _h3_cell_to_latlng(cell2)
         return self._haversine(lat1, lon1, lat2, lon2)
 
     def cells_within_radius(self, lat: float, lon: float, radius_km: float) -> List[str]:
@@ -148,19 +198,19 @@ class H3Grid:
         Returns:
             List of H3 cell IDs
         """
-        center_cell = h3.geo_to_h3(lat, lon, self.resolution)
+        center_cell = _h3_latlng_to_cell(lat, lon, self.resolution)
 
         # Estimate k-ring size needed
         # Average H3 edge length at resolution 4 is ~5.16 km
-        edge_length_km = h3.edge_length(self.resolution, unit="km")
+        edge_length_km = _h3_edge_length(self.resolution, "km")
         k = int(np.ceil(radius_km / edge_length_km)) + 1
 
-        candidates = h3.k_ring(center_cell, k)
+        candidates = _h3_k_ring(center_cell, k)
 
         # Filter by actual distance
         result = []
         for cell in candidates:
-            cell_lat, cell_lon = h3.h3_to_geo(cell)
+            cell_lat, cell_lon = _h3_cell_to_latlng(cell)
             if self._haversine(lat, lon, cell_lat, cell_lon) <= radius_km:
                 result.append(cell)
 
@@ -186,7 +236,7 @@ class H3Grid:
 
     def get_cell_area_km2(self, cell: str) -> float:
         """Get area of a cell in km^2."""
-        return h3.cell_area(cell, unit="km^2")
+        return _h3_cell_area(cell, "km^2")
 
     def to_geopandas(self) -> gpd.GeoDataFrame:
         """Convert grid to GeoDataFrame for visualization."""
@@ -194,7 +244,7 @@ class H3Grid:
         h3_ids = []
 
         for cell in self.cells:
-            boundary = h3.h3_to_geo_boundary(cell, geo_json=True)
+            boundary = _h3_cell_to_boundary(cell)
             # Convert from (lon, lat) to (lat, lon) for Shapely
             coords = [(lon, lat) for lat, lon in boundary]
             poly = Polygon(coords)
