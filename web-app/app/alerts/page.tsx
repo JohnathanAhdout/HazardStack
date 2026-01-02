@@ -48,45 +48,67 @@ export default function Alerts() {
           <p className="text-gray-600">Real-time monitoring of seismic activity and flood warnings</p>
         </div>
 
+        {/* Info Banner */}
+        <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg shadow-lg p-6 mb-6">
+          <h2 className="text-xl font-bold mb-2">Live Hazard Event Monitoring</h2>
+          <p className="text-blue-100 text-sm">
+            Real-time tracking of seismic events from USGS and flood warnings from basin monitoring systems.
+            Events are automatically updated and filtered by severity and time range.
+          </p>
+        </div>
+
         {/* Filters */}
-        <div className="bg-white rounded-lg shadow p-4 mb-6 flex gap-4 flex-wrap">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Time Range</label>
-            <select
-              value={timeRange}
-              onChange={(e) => setTimeRange(Number(e.target.value))}
-              className="px-3 py-2 border border-gray-300 rounded-md text-black"
-            >
-              <option value={6}>Last 6 hours</option>
-              <option value={12}>Last 12 hours</option>
-              <option value={24}>Last 24 hours</option>
-              <option value={48}>Last 48 hours</option>
-              <option value={168}>Last week</option>
-            </select>
-          </div>
+        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+            <AlertCircle className="w-5 h-5 mr-2 text-blue-500" />
+            Filter Events
+          </h3>
+          <div className="flex gap-4 flex-wrap items-end">
+            <div className="flex-1 min-w-[200px]">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Time Range
+                <span className="text-xs text-gray-500 ml-2">({events.length} events found)</span>
+              </label>
+              <select
+                value={timeRange}
+                onChange={(e) => setTimeRange(Number(e.target.value))}
+                className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-lg text-black font-medium hover:border-blue-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition"
+              >
+                <option value={6}>Last 6 hours</option>
+                <option value={12}>Last 12 hours</option>
+                <option value={24}>Last 24 hours</option>
+                <option value={48}>Last 48 hours</option>
+                <option value={168}>Last 7 days</option>
+              </select>
+            </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Min Magnitude</label>
-            <select
-              value={minMagnitude}
-              onChange={(e) => setMinMagnitude(Number(e.target.value))}
-              className="px-3 py-2 border border-gray-300 rounded-md text-black"
-            >
-              <option value={2.0}>2.0+</option>
-              <option value={3.0}>3.0+</option>
-              <option value={4.0}>4.0+</option>
-              <option value={5.0}>5.0+</option>
-              <option value={6.0}>6.0+</option>
-            </select>
-          </div>
+            <div className="flex-1 min-w-[200px]">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Minimum Magnitude
+                <span className="text-xs text-gray-500 ml-2">(seismic events only)</span>
+              </label>
+              <select
+                value={minMagnitude}
+                onChange={(e) => setMinMagnitude(Number(e.target.value))}
+                className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-lg text-black font-medium hover:border-blue-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition"
+              >
+                <option value={2.0}>2.0+ (All recorded events)</option>
+                <option value={3.0}>3.0+ (Light earthquakes)</option>
+                <option value={4.0}>4.0+ (Moderate earthquakes)</option>
+                <option value={5.0}>5.0+ (Strong earthquakes)</option>
+                <option value={6.0}>6.0+ (Major earthquakes)</option>
+              </select>
+            </div>
 
-          <div className="flex items-end">
-            <button
-              onClick={loadEvents}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-            >
-              Refresh
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={loadEvents}
+                className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium shadow-md hover:shadow-lg transition flex items-center gap-2"
+              >
+                <AlertCircle className="w-4 h-4" />
+                Refresh Data
+              </button>
+            </div>
           </div>
         </div>
 
@@ -140,33 +162,48 @@ export default function Alerts() {
 
 function EventCard({ event, onClick, isSelected }: any) {
   const getMagnitudeColor = (mag: number) => {
-    if (mag >= 7) return 'text-red-700 bg-red-50'
-    if (mag >= 6) return 'text-orange-700 bg-orange-50'
-    if (mag >= 5) return 'text-yellow-700 bg-yellow-50'
-    return 'text-green-700 bg-green-50'
+    if (mag >= 7) return 'bg-red-600 text-white border-red-700'
+    if (mag >= 6) return 'bg-orange-600 text-white border-orange-700'
+    if (mag >= 5) return 'bg-yellow-500 text-white border-yellow-600'
+    if (mag >= 4) return 'bg-blue-500 text-white border-blue-600'
+    return 'bg-green-500 text-white border-green-600'
+  }
+
+  const getMagnitudeLabel = (mag: number) => {
+    if (mag >= 7) return 'Major'
+    if (mag >= 6) return 'Strong'
+    if (mag >= 5) return 'Moderate'
+    if (mag >= 4) return 'Light'
+    return 'Minor'
   }
 
   const getRiskLevelColor = (level: string) => {
-    if (level === 'EXTREME' || level === 'HIGH') return 'text-red-700 bg-red-50'
-    if (level === 'MODERATE') return 'text-yellow-700 bg-yellow-50'
-    return 'text-green-700 bg-green-50'
+    if (level === 'EXTREME') return 'bg-red-600 text-white border-red-700'
+    if (level === 'HIGH') return 'bg-orange-600 text-white border-orange-700'
+    if (level === 'MODERATE') return 'bg-yellow-500 text-white border-yellow-600'
+    return 'bg-green-500 text-white border-green-600'
   }
 
   if (event.type === 'flood') {
     return (
       <div
         onClick={onClick}
-        className={`border rounded-lg p-3 hover:shadow-md transition cursor-pointer ${
-          isSelected ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+        className={`border-2 rounded-xl p-4 hover:shadow-xl transition-all cursor-pointer ${
+          isSelected ? 'border-blue-500 bg-blue-50 shadow-lg' : 'border-gray-200 bg-white hover:border-blue-300'
         }`}
       >
-        <div className="flex items-center space-x-2 mb-2">
-          <div className={`px-2 py-1 rounded font-bold text-sm ${getRiskLevelColor(event.risk_level)}`}>
-            {event.risk_level}
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <div className={`px-3 py-1.5 rounded-lg font-bold text-sm shadow-sm border-2 ${getRiskLevelColor(event.risk_level)}`}>
+              {event.risk_level}
+            </div>
           </div>
-          <span className="text-sm font-semibold">{event.basin}</span>
+          <div className="bg-blue-100 text-blue-700 px-2 py-1 rounded-md text-xs font-semibold">
+            FLOOD WARNING
+          </div>
         </div>
-        <p className="text-xs text-gray-600">{event.message}</p>
+        <h4 className="font-bold text-gray-900 mb-2 text-base">{event.basin}</h4>
+        <p className="text-sm text-gray-700 leading-relaxed">{event.message}</p>
       </div>
     )
   }
@@ -174,19 +211,35 @@ function EventCard({ event, onClick, isSelected }: any) {
   return (
     <div
       onClick={onClick}
-      className={`border rounded-lg p-3 hover:shadow-md transition cursor-pointer ${
-        isSelected ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+      className={`border-2 rounded-xl p-4 hover:shadow-xl transition-all cursor-pointer ${
+        isSelected ? 'border-blue-500 bg-blue-50 shadow-lg' : 'border-gray-200 bg-white hover:border-blue-300'
       }`}
     >
-      <div className="flex items-center space-x-2 mb-2">
-        <div className={`px-2 py-1 rounded font-bold text-sm ${getMagnitudeColor(event.magnitude)}`}>
-          M {event.magnitude?.toFixed(1)}
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <div className={`px-3 py-1.5 rounded-lg font-bold text-sm shadow-sm border-2 ${getMagnitudeColor(event.magnitude)}`}>
+            M {event.magnitude?.toFixed(1)}
+          </div>
+          <span className="text-xs font-semibold text-gray-600 bg-gray-100 px-2 py-1 rounded">
+            {getMagnitudeLabel(event.magnitude)}
+          </span>
         </div>
-        <span className="text-sm font-semibold">{event.place}</span>
+        <div className="bg-orange-100 text-orange-700 px-2 py-1 rounded-md text-xs font-semibold">
+          EARTHQUAKE
+        </div>
       </div>
-      <div className="text-xs text-gray-600">
-        <Clock className="w-3 h-3 inline mr-1" />
-        {event.time ? formatDistanceToNow(new Date(event.time), { addSuffix: true }) : 'Unknown time'}
+      <h4 className="font-bold text-gray-900 mb-2 text-base">{event.place}</h4>
+      <div className="flex items-center gap-3 text-sm text-gray-600">
+        <div className="flex items-center gap-1">
+          <Clock className="w-4 h-4" />
+          <span>{event.time ? formatDistanceToNow(new Date(event.time), { addSuffix: true }) : 'Unknown'}</span>
+        </div>
+        {event.depth && (
+          <div className="flex items-center gap-1">
+            <MapPin className="w-4 h-4" />
+            <span>{event.depth.toFixed(1)} km depth</span>
+          </div>
+        )}
       </div>
     </div>
   )
