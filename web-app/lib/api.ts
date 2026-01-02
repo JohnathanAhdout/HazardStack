@@ -35,8 +35,12 @@ export async function fetchRiskData(
     return response.data
   } catch (error) {
     console.error('Error fetching risk data:', error)
-    // Return mock data if API is unavailable
-    return getMockRiskData(lat, lon)
+    // Return minimal safe response if API is unavailable
+    return {
+      query: { lat, lon, radius_km, horizons },
+      generated_at: new Date().toISOString(),
+      cells: [],
+    }
   }
 }
 
@@ -94,58 +98,6 @@ export async function fetchHealthCheck(): Promise<any> {
   } catch (error) {
     console.error('Error checking API health:', error)
     return { status: 'unavailable' }
-  }
-}
-
-// Mock data for development/demo
-function getMockRiskData(lat: number, lon: number): any {
-  // Generate pseudo-random but deterministic values based on lat/lon
-  // This ensures different locations show different risk levels
-  const seed = Math.abs(Math.sin(lat * 100) * Math.cos(lon * 100))
-
-  // Generate varying risk scores based on location
-  const score1h = 0.1 + (seed * 0.4)  // Range: 0.1 - 0.5
-  const score6h = 0.3 + (seed * 0.5)  // Range: 0.3 - 0.8
-  const score24h = 0.4 + (seed * 0.6) // Range: 0.4 - 1.0
-
-  // Convert scores to risk levels
-  const getRiskLevel = (score: number): string => {
-    if (score >= 0.75) return 'EXTREME'
-    if (score >= 0.6) return 'HIGH'
-    if (score >= 0.4) return 'MODERATE'
-    return 'LOW'
-  }
-
-  // Generate component risks with variation
-  const rainExtreme = 0.2 + (Math.abs(Math.sin(lat * 50)) * 0.7)
-  const flood = 0.1 + (Math.abs(Math.cos(lon * 50)) * 0.6)
-  const mmi = 0.5 + (Math.abs(Math.sin(lat + lon)) * 3.5)
-  const aftershock = 0.01 + (Math.abs(Math.cos(lat - lon)) * 0.15)
-
-  return {
-    query: { lat, lon, radius_km: 10 },
-    generated_at: new Date().toISOString(),
-    cells: [
-      {
-        h3_id: '852a1073fffffff',
-        centroid: [lat, lon],
-        risk: {
-          '1h': { level: getRiskLevel(score1h), score: parseFloat(score1h.toFixed(2)) },
-          '6h': { level: getRiskLevel(score6h), score: parseFloat(score6h.toFixed(2)) },
-          '24h': { level: getRiskLevel(score24h), score: parseFloat(score24h.toFixed(2)) },
-        },
-        components: {
-          rain_extreme_6h: parseFloat(rainExtreme.toFixed(2)),
-          flood_12h: parseFloat(flood.toFixed(2)),
-          mmi_mean: parseFloat(mmi.toFixed(1)),
-          aftershock_24h: parseFloat(aftershock.toFixed(3)),
-        },
-        explain: [
-          { feature: 'R_acc_3h', impact: parseFloat((0.1 + seed * 0.2).toFixed(2)) },
-          { feature: 'API_3d', impact: parseFloat((0.05 + seed * 0.15).toFixed(2)) },
-        ],
-      },
-    ],
   }
 }
 
