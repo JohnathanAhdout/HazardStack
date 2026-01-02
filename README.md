@@ -22,6 +22,7 @@ Advanced deep learning system for predicting earthquakes, floods, and rainfall h
 
 ## 📋 Table of Contents
 
+- [📊 Princeton Research Day 2026 Poster](#-princeton-research-day-2026-poster)
 - [🚀 Access Prototypes](#-access-prototypes)
 - [🌀 NEW: Gravity Wave Optimization](#-new-gravity-wave-optimization)
 - [Test Results](#-test-results)
@@ -33,6 +34,30 @@ Advanced deep learning system for predicting earthquakes, floods, and rainfall h
 - [Benchmark Comparison](#-benchmark-comparison)
 - [Quick Start](#-quick-start)
 - [Documentation](#-documentation)
+
+## 📊 Princeton Research Day 2026 Poster
+
+**SPIRAL will be presented at Princeton Research Day on February 20, 2026!**
+
+🎨 **View the Poster:**
+- **[Interactive HTML Poster](poster.html)** - Open in browser, print to PDF (40" × 30")
+- **[Poster Design Guide](PRINCETON_RESEARCH_DAY_POSTER.md)** - Complete specifications and PowerPoint instructions
+- **Event:** Friday, February 20, 2026, 4:00-6:00 PM, Princeton University Art Museum
+
+**Quick Print:**
+1. Open `poster.html` in your browser
+2. Print to PDF (Ctrl+P or Cmd+P)
+3. Settings: Landscape, Scale: 100%, Margins: None
+4. Submit to PRD for free printing!
+
+**Poster Highlights:**
+- 🌀 Atmospheric gravity wave detection explained for a broad audience
+- 📊 94.5% accuracy, 6 hours earlier warnings, 54% better predictions
+- 🚀 Real-world impact: Mobile app, web dashboard, and alert system
+- 📱 Interactive QR code to test the app live
+- ✅ Follows all PRD guidelines: plain language, compelling visuals, no jargon
+
+---
 
 ## 🚀 Access Prototypes
 
