@@ -99,6 +99,29 @@ export async function fetchHealthCheck(): Promise<any> {
 
 // Mock data for development/demo
 function getMockRiskData(lat: number, lon: number): any {
+  // Generate pseudo-random but deterministic values based on lat/lon
+  // This ensures different locations show different risk levels
+  const seed = Math.abs(Math.sin(lat * 100) * Math.cos(lon * 100))
+
+  // Generate varying risk scores based on location
+  const score1h = 0.1 + (seed * 0.4)  // Range: 0.1 - 0.5
+  const score6h = 0.3 + (seed * 0.5)  // Range: 0.3 - 0.8
+  const score24h = 0.4 + (seed * 0.6) // Range: 0.4 - 1.0
+
+  // Convert scores to risk levels
+  const getRiskLevel = (score: number): string => {
+    if (score >= 0.75) return 'EXTREME'
+    if (score >= 0.6) return 'HIGH'
+    if (score >= 0.4) return 'MODERATE'
+    return 'LOW'
+  }
+
+  // Generate component risks with variation
+  const rainExtreme = 0.2 + (Math.abs(Math.sin(lat * 50)) * 0.7)
+  const flood = 0.1 + (Math.abs(Math.cos(lon * 50)) * 0.6)
+  const mmi = 0.5 + (Math.abs(Math.sin(lat + lon)) * 3.5)
+  const aftershock = 0.01 + (Math.abs(Math.cos(lat - lon)) * 0.15)
+
   return {
     query: { lat, lon, radius_km: 10 },
     generated_at: new Date().toISOString(),
@@ -107,19 +130,19 @@ function getMockRiskData(lat: number, lon: number): any {
         h3_id: '852a1073fffffff',
         centroid: [lat, lon],
         risk: {
-          '1h': { level: 'LOW', score: 0.23 },
-          '6h': { level: 'MODERATE', score: 0.43 },
-          '24h': { level: 'HIGH', score: 0.71 },
+          '1h': { level: getRiskLevel(score1h), score: parseFloat(score1h.toFixed(2)) },
+          '6h': { level: getRiskLevel(score6h), score: parseFloat(score6h.toFixed(2)) },
+          '24h': { level: getRiskLevel(score24h), score: parseFloat(score24h.toFixed(2)) },
         },
         components: {
-          rain_extreme_6h: 0.68,
-          flood_12h: 0.22,
-          mmi_mean: 1.2,
-          aftershock_24h: 0.03,
+          rain_extreme_6h: parseFloat(rainExtreme.toFixed(2)),
+          flood_12h: parseFloat(flood.toFixed(2)),
+          mmi_mean: parseFloat(mmi.toFixed(1)),
+          aftershock_24h: parseFloat(aftershock.toFixed(3)),
         },
         explain: [
-          { feature: 'R_acc_3h', impact: 0.19 },
-          { feature: 'API_3d', impact: 0.12 },
+          { feature: 'R_acc_3h', impact: parseFloat((0.1 + seed * 0.2).toFixed(2)) },
+          { feature: 'API_3d', impact: parseFloat((0.05 + seed * 0.15).toFixed(2)) },
         ],
       },
     ],

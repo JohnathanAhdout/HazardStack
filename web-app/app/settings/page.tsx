@@ -168,7 +168,7 @@ export default function SettingsPage() {
                     }
                     updateMapSetting('defaultLocation', locations[e.target.value])
                   }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
                 >
                   <option>Mumbai</option>
                   <option>Delhi</option>
@@ -210,7 +210,7 @@ export default function SettingsPage() {
                 <select
                   value={settings.map.mapStyle}
                   onChange={(e) => updateMapSetting('mapStyle', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
                 >
                   <option value="standard">Standard</option>
                   <option value="satellite">Satellite</option>
@@ -233,7 +233,7 @@ export default function SettingsPage() {
                 <select
                   value={settings.display.theme}
                   onChange={(e) => updateDisplaySetting('theme', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
                 >
                   <option value="light">Light</option>
                   <option value="dark">Dark</option>
@@ -246,7 +246,7 @@ export default function SettingsPage() {
                 <select
                   value={settings.display.timeFormat}
                   onChange={(e) => updateDisplaySetting('timeFormat', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
                 >
                   <option value="12h">12-hour</option>
                   <option value="24h">24-hour</option>
@@ -258,7 +258,7 @@ export default function SettingsPage() {
                 <select
                   value={settings.display.units}
                   onChange={(e) => updateDisplaySetting('units', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
                 >
                   <option value="metric">Metric (km, °C)</option>
                   <option value="imperial">Imperial (mi, °F)</option>

@@ -55,7 +55,7 @@ export default function Alerts() {
             <select
               value={timeRange}
               onChange={(e) => setTimeRange(Number(e.target.value))}
-              className="px-3 py-2 border border-gray-300 rounded-md"
+              className="px-3 py-2 border border-gray-300 rounded-md text-black"
             >
               <option value={6}>Last 6 hours</option>
               <option value={12}>Last 12 hours</option>
@@ -70,7 +70,7 @@ export default function Alerts() {
             <select
               value={minMagnitude}
               onChange={(e) => setMinMagnitude(Number(e.target.value))}
-              className="px-3 py-2 border border-gray-300 rounded-md"
+              className="px-3 py-2 border border-gray-300 rounded-md text-black"
             >
               <option value={2.0}>2.0+</option>
               <option value={3.0}>3.0+</option>
