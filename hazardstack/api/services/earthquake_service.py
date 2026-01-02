@@ -2,8 +2,10 @@
 
 import httpx
 from datetime import datetime, timedelta
-from typing import List, Optional
-from ..routes.events import EarthquakeEvent
+from typing import List, Optional, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ..routes.events import EarthquakeEvent
 
 
 class USGSEarthquakeService:
@@ -19,7 +21,7 @@ class USGSEarthquakeService:
         max_lat: Optional[float] = None,
         min_lon: Optional[float] = None,
         max_lon: Optional[float] = None,
-    ) -> List[EarthquakeEvent]:
+    ) -> List["EarthquakeEvent"]:
         """
         Fetch recent earthquakes from USGS.
 
@@ -34,6 +36,8 @@ class USGSEarthquakeService:
         Returns:
             List of EarthquakeEvent objects
         """
+        from ..routes.events import EarthquakeEvent
+
         # Calculate start time
         start_time = datetime.utcnow() - timedelta(hours=hours)
 

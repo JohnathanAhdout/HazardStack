@@ -21,6 +21,25 @@ router = APIRouter()
 grid = H3Grid(resolution=4)
 
 
+# Helper functions for h3 API compatibility
+def h3_cell_to_latlng(cell: str) -> tuple:
+    """Convert H3 cell to lat/lng (compatible with h3 v3 and v4)"""
+    import h3
+    try:
+        return h3.cell_to_latlng(cell)
+    except AttributeError:
+        return h3.h3_to_geo(cell)
+
+
+def h3_cell_to_boundary(cell: str) -> list:
+    """Get H3 cell boundary (compatible with h3 v3 and v4)"""
+    import h3
+    try:
+        return h3.cell_to_boundary(cell, geo_json=True)
+    except (AttributeError, TypeError):
+        return h3.h3_to_geo_boundary(cell, geo_json=True)
+
+
 def calculate_distance_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     """Calculate distance between two points using Haversine formula."""
     R = 6371  # Earth's radius in km
@@ -187,7 +206,7 @@ async def get_risk(
 
     cell_risks = []
     for cell in cells_in_radius[:20]:  # Limit to 20 cells for response size
-        cell_lat, cell_lon = h3.h3_to_geo(cell)
+        cell_lat, cell_lon = h3_cell_to_latlng(cell)
 
         # Calculate earthquake-based risk components
         max_mmi = 1.0  # Baseline MMI (not felt)
@@ -289,9 +308,9 @@ async def get_risk(
 
 @router.get("/tiles/{z}/{x}/{y}")
 async def get_tile(
-    z: int = Query(..., ge=0, le=15, description="Zoom level"),
-    x: int = Query(..., description="Tile X coordinate"),
-    y: int = Query(..., description="Tile Y coordinate"),
+    z: int,
+    x: int,
+    y: int,
     horizon: str = Query("6h", description="Forecast horizon"),
 ):
     """
@@ -344,7 +363,7 @@ async def get_tile(
         for cell_id in cells[:50]:  # Limit to 50 cells per tile
             import h3
 
-            cell_lat, cell_lon = h3.h3_to_geo(cell_id)
+            cell_lat, cell_lon = h3_cell_to_latlng(cell_id)
 
             # Check if cell is within tile bounds
             if not (lat_min <= cell_lat <= lat_max and lon_min <= cell_lon <= lon_max):
@@ -396,7 +415,7 @@ async def get_tile(
                 level = "LOW"
 
             # Get hexagon boundary
-            boundary = h3.h3_to_geo_boundary(cell_id, geo_json=True)
+            boundary = h3_cell_to_boundary(cell_id)
 
             feature = {
                 "type": "Feature",

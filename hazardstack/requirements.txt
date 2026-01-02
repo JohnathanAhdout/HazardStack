@@ -10,3 +10,4 @@ geopy>=2.4.0
 python-dateutil>=2.8.0
 shapely>=2.0.0
 geopandas>=0.14.0
+psutil>=5.9.0
